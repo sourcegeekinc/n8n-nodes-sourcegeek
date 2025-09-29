@@ -9,7 +9,7 @@ export class SourcegeekCredentialsApi implements ICredentialType {
 	name = 'sourcegeekCredentialsApi';
 	displayName = 'Sourcegeek Credentials API';
 
-	documentationUrl = 'https://your-docs-url';
+	documentationUrl = 'https://support.sourcegeek.com/en/articles/12441230-n8n-integration';
 
 	properties: INodeProperties[] = [
 		{
