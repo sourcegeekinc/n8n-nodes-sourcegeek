@@ -1,4 +1,9 @@
-import { IAuthenticateGeneric, ICredentialType, INodeProperties } from 'n8n-workflow';
+import {
+	IAuthenticateGeneric,
+	ICredentialTestRequest,
+	ICredentialType,
+	INodeProperties,
+} from 'n8n-workflow';
 
 export class SourcegeekCredentialsApi implements ICredentialType {
 	name = 'sourcegeekCredentialsApi';
@@ -25,5 +30,27 @@ export class SourcegeekCredentialsApi implements ICredentialType {
 				Authorization: '=Bearer {{$credentials.apiKey}}',
 			},
 		},
+	};
+
+	test: ICredentialTestRequest = {
+		request: {
+			baseURL: 'https://integrations.sourcegeek.com/api/n8n/v1',
+			url: '/test-credentials',
+			method: 'POST',
+			headers: {
+				Authorization: '=Bearer {{$credentials.apiKey}}',
+			},
+			json: true,
+		},
+		rules: [
+			{
+				type: 'responseSuccessBody',
+				properties: {
+					key: 'success',
+					value: true,
+					message: 'Credentials are valid',
+				},
+			},
+		],
 	};
 }
