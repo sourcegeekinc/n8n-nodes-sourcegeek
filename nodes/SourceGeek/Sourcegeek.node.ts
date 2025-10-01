@@ -5,10 +5,8 @@ import type {
 	INodeType,
 	INodeTypeDescription,
 } from 'n8n-workflow';
-import { NodeConnectionType, NodeOperationError } from 'n8n-workflow';
-import { OPERATION, RESOURCE, getProfileDataFields } from './actions';
-
-const BASE_URL = 'https://integrations.sourcegeek.com/api/n8n/v1';
+import { NodeOperationError } from 'n8n-workflow';
+import { BASE_URL, OPERATION, RESOURCE, getProfileDataFields } from './actions';
 
 export class Sourcegeek implements INodeType {
 	description: INodeTypeDescription = {
@@ -21,8 +19,8 @@ export class Sourcegeek implements INodeType {
 		defaults: {
 			name: 'Example Node',
 		},
-		inputs: [NodeConnectionType.Main],
-		outputs: [NodeConnectionType.Main],
+		inputs: ['main'],
+		outputs: ['main'],
 		usableAsTool: true,
 		credentials: [
 			{

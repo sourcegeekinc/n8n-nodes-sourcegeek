@@ -4,6 +4,7 @@ import {
 	ICredentialType,
 	INodeProperties,
 } from 'n8n-workflow';
+import { BASE_URL } from '../nodes/SourceGeek/actions';
 
 export class SourcegeekCredentialsApi implements ICredentialType {
 	name = 'sourcegeekCredentialsApi';
@@ -34,7 +35,7 @@ export class SourcegeekCredentialsApi implements ICredentialType {
 
 	test: ICredentialTestRequest = {
 		request: {
-			baseURL: 'https://integrations.sourcegeek.com/api/n8n/v1',
+			baseURL: BASE_URL,
 			url: '/test-credentials',
 			method: 'POST',
 			headers: {
