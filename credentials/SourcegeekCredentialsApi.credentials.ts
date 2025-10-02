@@ -45,10 +45,9 @@ export class SourcegeekCredentialsApi implements ICredentialType {
 		},
 		rules: [
 			{
-				type: 'responseSuccessBody',
+				type: 'responseCode',
 				properties: {
-					key: 'success',
-					value: true,
+					value: 200,
 					message: 'Credentials are valid',
 				},
 			},
