@@ -10,14 +10,14 @@ import { BASE_URL, OPERATION, RESOURCE, getProfileDataFields } from './actions';
 
 export class Sourcegeek implements INodeType {
 	description: INodeTypeDescription = {
-		displayName: 'SourceGeek',
+		displayName: 'SourceGeek for LinkedIn',
 		name: 'sourcegeek',
 		icon: 'file:sourcegeek.svg',
 		group: ['transform'],
 		version: 1,
-		description: 'Basic Example Node',
+		description: 'Automate LinkedIn tasks and AI workflows with SourceGeek.',
 		defaults: {
-			name: 'Example Node',
+			name: 'SourceGeek for LinkedIn',
 		},
 		inputs: ['main'],
 		outputs: ['main'],
@@ -33,7 +33,7 @@ export class Sourcegeek implements INodeType {
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 		const items = this.getInputData();
-		const out: IDataObject[] = [];
+		const outItems: INodeExecutionData[] = [];
 
 		const credentials = (await this.getCredentials('sourcegeekCredentialsApi')) as {
 			apiKey: string;
@@ -51,21 +51,28 @@ export class Sourcegeek implements INodeType {
 
 			try {
 				if (resource !== 'linkedin') {
-					out.push({ success: true });
+					outItems.push({
+						json: { success: true } as IDataObject,
+						pairedItem: { item: itemIndex },
+					});
 					continue;
 				}
 
 				switch (operation) {
 					case 'getProfileData': {
 						const linkedinUrl = this.getNodeParameter('linkedinUrl', itemIndex) as string;
-						const res = await this.helpers.httpRequest.call(this, {
-							method: 'POST',
-							url: `${BASE_URL}/get-profile-data`,
-							headers: commonHeaders,
-							json: true,
-							body: { linkedinUrl },
-						});
-						out.push(res as IDataObject);
+						const res = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'sourcegeekCredentialsApi',
+							{
+								method: 'POST',
+								url: `${BASE_URL}/get-profile-data`,
+								headers: commonHeaders,
+								json: true,
+								body: { linkedinUrl },
+							},
+						);
+						outItems.push({ json: res as IDataObject, pairedItem: { item: itemIndex } });
 						break;
 					}
 				}
@@ -73,7 +80,13 @@ export class Sourcegeek implements INodeType {
 				// This node should never fail but we want to showcase how
 				// to handle errors.
 				if (this.continueOnFail()) {
-					items.push({ json: this.getInputData(itemIndex)[0].json, error, pairedItem: itemIndex });
+					outItems.push({
+						json: {
+							error: (error as { message?: string }).message ?? (error as unknown as IDataObject),
+						} as IDataObject,
+						pairedItem: { item: itemIndex },
+					});
+					continue;
 				} else {
 					// Adding `itemIndex` allows other workflows to handle this error
 					if (error.context) {
@@ -89,7 +102,6 @@ export class Sourcegeek implements INodeType {
 			}
 		}
 
-		const outItems = this.helpers.returnJsonArray(out) as INodeExecutionData[];
 		return [outItems];
 	}
 }
