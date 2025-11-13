@@ -22,6 +22,16 @@ export const OPERATION: INodeProperties = {
 			value: 'getProfileData',
 			action: 'Get data from a linkedin profile',
 		},
+		{
+			name: 'Send Connection Request',
+			value: 'sendConnectionRequest',
+			action: 'Send connection request',
+		},
+		{
+			name: 'Send Message',
+			value: 'sendMessage',
+			action: 'Send message',
+		},
 	],
 	default: 'getProfileData',
 	displayOptions: { show: { resource: ['linkedin'] } },

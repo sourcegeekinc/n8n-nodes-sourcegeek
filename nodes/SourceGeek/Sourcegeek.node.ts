@@ -6,7 +6,14 @@ import type {
 	INodeTypeDescription,
 } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
-import { BASE_URL, OPERATION, RESOURCE, getProfileDataFields } from './actions';
+import {
+	BASE_URL,
+	OPERATION,
+	RESOURCE,
+	getProfileDataFields,
+	sendConnectionRequestFields,
+	sendMessageFields,
+} from './actions';
 
 export class Sourcegeek implements INodeType {
 	description: INodeTypeDescription = {
@@ -28,7 +35,13 @@ export class Sourcegeek implements INodeType {
 				required: true,
 			},
 		],
-		properties: [RESOURCE, OPERATION, ...getProfileDataFields],
+		properties: [
+			RESOURCE,
+			OPERATION,
+			...getProfileDataFields,
+			...sendConnectionRequestFields,
+			...sendMessageFields,
+		],
 	};
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
@@ -70,6 +83,44 @@ export class Sourcegeek implements INodeType {
 								headers: commonHeaders,
 								json: true,
 								body: { linkedinUrl },
+							},
+						);
+						outItems.push({ json: res as IDataObject, pairedItem: { item: itemIndex } });
+						break;
+					}
+					case 'sendConnectionRequest': {
+						const linkedinUrl = this.getNodeParameter('linkedinUrl', itemIndex) as string;
+						const connectionNote = this.getNodeParameter('connectionNote', itemIndex, '') as string;
+						const body: IDataObject = { linkedinUrl };
+						if (connectionNote) {
+							body.connectionNote = connectionNote;
+						}
+						const res = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'sourcegeekCredentialsApi',
+							{
+								method: 'POST',
+								url: `${BASE_URL}/send-connection-request`,
+								headers: commonHeaders,
+								json: true,
+								body,
+							},
+						);
+						outItems.push({ json: res as IDataObject, pairedItem: { item: itemIndex } });
+						break;
+					}
+					case 'sendMessage': {
+						const linkedinUrl = this.getNodeParameter('linkedinUrl', itemIndex) as string;
+						const message = this.getNodeParameter('message', itemIndex) as string;
+						const res = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'sourcegeekCredentialsApi',
+							{
+								method: 'POST',
+								url: `${BASE_URL}/send-message`,
+								headers: commonHeaders,
+								json: true,
+								body: { linkedinUrl, message },
 							},
 						);
 						outItems.push({ json: res as IDataObject, pairedItem: { item: itemIndex } });
