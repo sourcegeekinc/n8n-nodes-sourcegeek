@@ -23,6 +23,21 @@ export const OPERATION: INodeProperties = {
 			action: 'Get data from a linkedin profile',
 		},
 		{
+			name: 'Import Contacts - Basic Search',
+			value: 'importContactsBasicSearch',
+			action: 'Import contacts from basic search',
+		},
+		{
+			name: 'Import Contacts - Recruiter Search',
+			value: 'importContactsRecruiterSearch',
+			action: 'Import contacts from recruiter search',
+		},
+		{
+			name: 'Import Contacts - Sales Navigator Search',
+			value: 'importContactsSalesNavSearch',
+			action: 'Import contacts from sales navigator search',
+		},
+		{
 			name: 'Send Connection Request',
 			value: 'sendConnectionRequest',
 			action: 'Send connection request',

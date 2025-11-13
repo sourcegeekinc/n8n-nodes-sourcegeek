@@ -11,6 +11,9 @@ import {
 	OPERATION,
 	RESOURCE,
 	getProfileDataFields,
+	importContactsBasicSearchFields,
+	importContactsRecruiterSearchFields,
+	importContactsSalesNavSearchFields,
 	sendConnectionRequestFields,
 	sendMessageFields,
 } from './actions';
@@ -39,6 +42,9 @@ export class Sourcegeek implements INodeType {
 			RESOURCE,
 			OPERATION,
 			...getProfileDataFields,
+			...importContactsBasicSearchFields,
+			...importContactsRecruiterSearchFields,
+			...importContactsSalesNavSearchFields,
 			...sendConnectionRequestFields,
 			...sendMessageFields,
 		],
@@ -83,6 +89,57 @@ export class Sourcegeek implements INodeType {
 								headers: commonHeaders,
 								json: true,
 								body: { linkedinUrl },
+							},
+						);
+						outItems.push({ json: res as IDataObject, pairedItem: { item: itemIndex } });
+						break;
+					}
+					case 'importContactsBasicSearch': {
+						const url = this.getNodeParameter('url', itemIndex) as string;
+						const maxResults = this.getNodeParameter('maxResults', itemIndex, 250) as number;
+						const res = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'sourcegeekCredentialsApi',
+							{
+								method: 'POST',
+								url: `${BASE_URL}/import-contacts-basic-search`,
+								headers: commonHeaders,
+								json: true,
+								body: { url, maxResults },
+							},
+						);
+						outItems.push({ json: res as IDataObject, pairedItem: { item: itemIndex } });
+						break;
+					}
+					case 'importContactsRecruiterSearch': {
+						const url = this.getNodeParameter('url', itemIndex) as string;
+						const maxResults = this.getNodeParameter('maxResults', itemIndex, 250) as number;
+						const res = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'sourcegeekCredentialsApi',
+							{
+								method: 'POST',
+								url: `${BASE_URL}/import-contacts-recruiter-search`,
+								headers: commonHeaders,
+								json: true,
+								body: { url, maxResults },
+							},
+						);
+						outItems.push({ json: res as IDataObject, pairedItem: { item: itemIndex } });
+						break;
+					}
+					case 'importContactsSalesNavSearch': {
+						const url = this.getNodeParameter('url', itemIndex) as string;
+						const maxResults = this.getNodeParameter('maxResults', itemIndex, 250) as number;
+						const res = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'sourcegeekCredentialsApi',
+							{
+								method: 'POST',
+								url: `${BASE_URL}/import-contacts-sales-nav-search`,
+								headers: commonHeaders,
+								json: true,
+								body: { url, maxResults },
 							},
 						);
 						outItems.push({ json: res as IDataObject, pairedItem: { item: itemIndex } });
