@@ -16,6 +16,7 @@ import {
 	importContactsSalesNavSearchFields,
 	sendConnectionRequestFields,
 	sendMessageFields,
+	sendRecruiterInMailMessageFields,
 } from './actions';
 
 export class Sourcegeek implements INodeType {
@@ -47,6 +48,7 @@ export class Sourcegeek implements INodeType {
 			...importContactsSalesNavSearchFields,
 			...sendConnectionRequestFields,
 			...sendMessageFields,
+			...sendRecruiterInMailMessageFields,
 		],
 	};
 
@@ -178,6 +180,33 @@ export class Sourcegeek implements INodeType {
 								headers: commonHeaders,
 								json: true,
 								body: { linkedinUrl, message },
+							},
+						);
+						outItems.push({ json: res as IDataObject, pairedItem: { item: itemIndex } });
+						break;
+					}
+					case 'sendRecruiterInMailMessage': {
+						const linkedinUrl = this.getNodeParameter('linkedinUrl', itemIndex) as string;
+						const subject = this.getNodeParameter('subject', itemIndex) as string;
+						const message = this.getNodeParameter('message', itemIndex) as string;
+						const linkedinProjectId = this.getNodeParameter(
+							'linkedinProjectId',
+							itemIndex,
+							'',
+						) as string;
+						const body: IDataObject = { linkedinUrl, subject, message };
+						if (linkedinProjectId) {
+							body.linkedinProjectId = linkedinProjectId;
+						}
+						const res = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'sourcegeekCredentialsApi',
+							{
+								method: 'POST',
+								url: `${BASE_URL}/send-recruiter-inmail-message`,
+								headers: commonHeaders,
+								json: true,
+								body,
 							},
 						);
 						outItems.push({ json: res as IDataObject, pairedItem: { item: itemIndex } });
