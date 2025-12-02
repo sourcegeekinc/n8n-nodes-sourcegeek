@@ -20,6 +20,12 @@ Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes
 ## Operations
 
 * Get Data From A Linkedin Profile
+* Import Contacts - Basic Search
+* Import Contacts - Recruiter Search
+* Import Contacts - Sales Navigator Search
+* Send Connection Request
+* Send Message
+* Send Recruiter InMail Message
 
 ## Credentials
 
