@@ -1,6 +1,6 @@
 import type { INodeProperties } from 'n8n-workflow';
 
-export const BASE_URL = 'https://integrations.sourcegeek.com/api/n8n/v1';
+export const BASE_URL = 'https://app.sourcegeek.com/api/integrations/n8n/v1';
 
 export const RESOURCE: INodeProperties = {
 	displayName: 'Resource',
