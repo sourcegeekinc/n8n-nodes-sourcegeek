@@ -90,6 +90,7 @@ export class Sourcegeek implements INodeType {
 								url: `${BASE_URL}/get-profile-data`,
 								headers: commonHeaders,
 								json: true,
+								timeout: 1000 * 60 * 20,
 								body: { linkedinUrl },
 							},
 						);
@@ -107,6 +108,7 @@ export class Sourcegeek implements INodeType {
 								url: `${BASE_URL}/import-contacts-basic-search`,
 								headers: commonHeaders,
 								json: true,
+								timeout: 1000 * 60 * 20,
 								body: { url, maxResults },
 							},
 						);
@@ -124,6 +126,7 @@ export class Sourcegeek implements INodeType {
 								url: `${BASE_URL}/import-contacts-recruiter-search`,
 								headers: commonHeaders,
 								json: true,
+								timeout: 1000 * 60 * 20,
 								body: { url, maxResults },
 							},
 						);
@@ -141,6 +144,7 @@ export class Sourcegeek implements INodeType {
 								url: `${BASE_URL}/import-contacts-sales-nav-search`,
 								headers: commonHeaders,
 								json: true,
+								timeout: 1000 * 60 * 20,
 								body: { url, maxResults },
 							},
 						);
@@ -162,6 +166,7 @@ export class Sourcegeek implements INodeType {
 								url: `${BASE_URL}/send-connection-request`,
 								headers: commonHeaders,
 								json: true,
+								timeout: 1000 * 60 * 20,
 								body,
 							},
 						);
@@ -179,6 +184,7 @@ export class Sourcegeek implements INodeType {
 								url: `${BASE_URL}/send-message`,
 								headers: commonHeaders,
 								json: true,
+								timeout: 1000 * 60 * 20,
 								body: { linkedinUrl, message },
 							},
 						);
@@ -206,6 +212,7 @@ export class Sourcegeek implements INodeType {
 								url: `${BASE_URL}/send-recruiter-inmail-message`,
 								headers: commonHeaders,
 								json: true,
+								timeout: 1000 * 60 * 20,
 								body,
 							},
 						);
