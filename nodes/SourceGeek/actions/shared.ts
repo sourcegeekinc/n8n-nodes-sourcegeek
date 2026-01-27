@@ -18,9 +18,39 @@ export const OPERATION: INodeProperties = {
 	noDataExpression: true,
 	options: [
 		{
+			name: 'AI People Search',
+			value: 'aiPeopleSearch',
+			action: 'Search for people using AI',
+		},
+		{
+			name: 'Check Connection Status',
+			value: 'checkConnectionStatus',
+			action: 'Check connection status with a profile',
+		},
+		{
+			name: 'Get Company Data',
+			value: 'getCompanyData',
+			action: 'Get data from a linkedin company page',
+		},
+		{
 			name: 'Get Data From A Linkedin Profile',
 			value: 'getProfileData',
 			action: 'Get data from a linkedin profile',
+		},
+		{
+			name: 'Get Recent Accepted Connection Requests',
+			value: 'getRecentAcceptedConnectionRequests',
+			action: 'Get recent accepted connection requests',
+		},
+		{
+			name: 'Get Recent Messages',
+			value: 'getRecentMessages',
+			action: 'Get recent messages',
+		},
+		{
+			name: 'Get Recent Recruiter Messages',
+			value: 'getRecentRecruiterMessages',
+			action: 'Get recent recruiter messages',
 		},
 		{
 			name: 'Import Contacts - Basic Search',

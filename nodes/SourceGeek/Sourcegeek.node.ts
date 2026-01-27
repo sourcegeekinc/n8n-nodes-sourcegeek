@@ -10,7 +10,13 @@ import {
 	BASE_URL,
 	OPERATION,
 	RESOURCE,
+	aiPeopleSearchFields,
+	checkConnectionStatusFields,
+	getCompanyDataFields,
 	getProfileDataFields,
+	getRecentAcceptedConnectionRequestsFields,
+	getRecentMessagesFields,
+	getRecentRecruiterMessagesFields,
 	importContactsBasicSearchFields,
 	importContactsRecruiterSearchFields,
 	importContactsSalesNavSearchFields,
@@ -42,7 +48,13 @@ export class Sourcegeek implements INodeType {
 		properties: [
 			RESOURCE,
 			OPERATION,
+			...aiPeopleSearchFields,
+			...checkConnectionStatusFields,
+			...getCompanyDataFields,
 			...getProfileDataFields,
+			...getRecentAcceptedConnectionRequestsFields,
+			...getRecentMessagesFields,
+			...getRecentRecruiterMessagesFields,
 			...importContactsBasicSearchFields,
 			...importContactsRecruiterSearchFields,
 			...importContactsSalesNavSearchFields,
@@ -80,6 +92,58 @@ export class Sourcegeek implements INodeType {
 				}
 
 				switch (operation) {
+					case 'aiPeopleSearch': {
+						const query = this.getNodeParameter('query', itemIndex) as string;
+						const maxResults = this.getNodeParameter('maxResults', itemIndex, 20) as number;
+						const res = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'sourcegeekCredentialsApi',
+							{
+								method: 'POST',
+								url: `${BASE_URL}/ai-people-search`,
+								headers: commonHeaders,
+								json: true,
+								timeout: 1000 * 60 * 20,
+								body: { query, maxResults },
+							},
+						);
+						outItems.push({ json: res as IDataObject, pairedItem: { item: itemIndex } });
+						break;
+					}
+					case 'checkConnectionStatus': {
+						const linkedinUrl = this.getNodeParameter('linkedinUrl', itemIndex) as string;
+						const res = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'sourcegeekCredentialsApi',
+							{
+								method: 'POST',
+								url: `${BASE_URL}/check-connection-status`,
+								headers: commonHeaders,
+								json: true,
+								timeout: 1000 * 60 * 20,
+								body: { linkedinUrl },
+							},
+						);
+						outItems.push({ json: res as IDataObject, pairedItem: { item: itemIndex } });
+						break;
+					}
+					case 'getCompanyData': {
+						const linkedinUrl = this.getNodeParameter('linkedinUrl', itemIndex) as string;
+						const res = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'sourcegeekCredentialsApi',
+							{
+								method: 'POST',
+								url: `${BASE_URL}/get-company-data`,
+								headers: commonHeaders,
+								json: true,
+								timeout: 1000 * 60 * 20,
+								body: { linkedinUrl },
+							},
+						);
+						outItems.push({ json: res as IDataObject, pairedItem: { item: itemIndex } });
+						break;
+					}
 					case 'getProfileData': {
 						const linkedinUrl = this.getNodeParameter('linkedinUrl', itemIndex) as string;
 						const res = await this.helpers.httpRequestWithAuthentication.call(
@@ -92,6 +156,54 @@ export class Sourcegeek implements INodeType {
 								json: true,
 								timeout: 1000 * 60 * 20,
 								body: { linkedinUrl },
+							},
+						);
+						outItems.push({ json: res as IDataObject, pairedItem: { item: itemIndex } });
+						break;
+					}
+					case 'getRecentAcceptedConnectionRequests': {
+						const res = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'sourcegeekCredentialsApi',
+							{
+								method: 'POST',
+								url: `${BASE_URL}/get-recent-accepted-connection-requests`,
+								headers: commonHeaders,
+								json: true,
+								timeout: 1000 * 60 * 20,
+								body: {},
+							},
+						);
+						outItems.push({ json: res as IDataObject, pairedItem: { item: itemIndex } });
+						break;
+					}
+					case 'getRecentMessages': {
+						const res = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'sourcegeekCredentialsApi',
+							{
+								method: 'POST',
+								url: `${BASE_URL}/get-recent-messages`,
+								headers: commonHeaders,
+								json: true,
+								timeout: 1000 * 60 * 20,
+								body: {},
+							},
+						);
+						outItems.push({ json: res as IDataObject, pairedItem: { item: itemIndex } });
+						break;
+					}
+					case 'getRecentRecruiterMessages': {
+						const res = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'sourcegeekCredentialsApi',
+							{
+								method: 'POST',
+								url: `${BASE_URL}/get-recent-recruiter-messages`,
+								headers: commonHeaders,
+								json: true,
+								timeout: 1000 * 60 * 20,
+								body: {},
 							},
 						);
 						outItems.push({ json: res as IDataObject, pairedItem: { item: itemIndex } });
