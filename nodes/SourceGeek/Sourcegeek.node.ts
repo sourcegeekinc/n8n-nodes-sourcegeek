@@ -17,6 +17,7 @@ import {
 	getRecentAcceptedConnectionRequestsFields,
 	getRecentMessagesFields,
 	getRecentRecruiterMessagesFields,
+	getToolRunFields,
 	importContactsBasicSearchFields,
 	importContactsRecruiterSearchFields,
 	importContactsSalesNavSearchFields,
@@ -55,6 +56,7 @@ export class Sourcegeek implements INodeType {
 			...getRecentAcceptedConnectionRequestsFields,
 			...getRecentMessagesFields,
 			...getRecentRecruiterMessagesFields,
+			...getToolRunFields,
 			...importContactsBasicSearchFields,
 			...importContactsRecruiterSearchFields,
 			...importContactsSalesNavSearchFields,
@@ -204,6 +206,23 @@ export class Sourcegeek implements INodeType {
 								json: true,
 								timeout: 1000 * 60 * 20,
 								body: {},
+							},
+						);
+						outItems.push({ json: res as IDataObject, pairedItem: { item: itemIndex } });
+						break;
+					}
+					case 'getToolRun': {
+						const toolRunId = this.getNodeParameter('toolRunId', itemIndex) as string;
+						const res = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'sourcegeekCredentialsApi',
+							{
+								method: 'POST',
+								url: `${BASE_URL}/get-tool-run`,
+								headers: commonHeaders,
+								json: true,
+								timeout: 1000 * 60 * 20,
+								body: { toolRunId },
 							},
 						);
 						outItems.push({ json: res as IDataObject, pairedItem: { item: itemIndex } });

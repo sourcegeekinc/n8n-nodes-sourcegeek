@@ -53,6 +53,11 @@ export const OPERATION: INodeProperties = {
 			action: 'Get recent recruiter messages',
 		},
 		{
+			name: 'Get Tool Run Result',
+			value: 'getToolRun',
+			action: 'Get tool run result by ID',
+		},
+		{
 			name: 'Import Contacts - Basic Search',
 			value: 'importContactsBasicSearch',
 			action: 'Import contacts from basic search',
