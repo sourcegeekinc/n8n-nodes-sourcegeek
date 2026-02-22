@@ -1,3 +1,5 @@
+declare function setTimeout(callback: (...args: unknown[]) => void, ms?: number): unknown;
+
 import type {
 	IDataObject,
 	IExecuteFunctions,
@@ -9,22 +11,62 @@ import { NodeOperationError } from 'n8n-workflow';
 import {
 	BASE_URL,
 	OPERATION,
+	POLLING_INTERVAL_MS,
 	RESOURCE,
 	aiPeopleSearchFields,
 	checkConnectionStatusFields,
 	getCompanyDataFields,
+	getCompanyJobsFields,
+	getCompanyPostsFields,
+	getConversationMessagesFields,
 	getProfileDataFields,
+	getProfilePostsFields,
 	getRecentAcceptedConnectionRequestsFields,
 	getRecentMessagesFields,
 	getRecentRecruiterMessagesFields,
 	getToolRunFields,
+	importCompanyFollowersFields,
 	importContactsBasicSearchFields,
 	importContactsRecruiterSearchFields,
 	importContactsSalesNavSearchFields,
+	importGroupMembersFields,
+	importPostCommentsFields,
+	importPostLikesFields,
+	importProfileViewersFields,
 	sendConnectionRequestFields,
 	sendMessageFields,
 	sendRecruiterInMailMessageFields,
 } from './actions';
+
+async function pollToolRun(
+	ctx: IExecuteFunctions,
+	toolRunId: string,
+	headers: Record<string, string>,
+): Promise<IDataObject> {
+	for (;;) {
+		const result = (await ctx.helpers.httpRequestWithAuthentication.call(
+			ctx,
+			'sourcegeekCredentialsApi',
+			{
+				method: 'POST',
+				url: `${BASE_URL}/get-tool-run`,
+				headers,
+				json: true,
+				body: { toolRunId },
+			},
+		)) as IDataObject;
+
+		if (
+			result.status === 'COMPLETED' ||
+			result.status === 'FAILED' ||
+			result.status === 'CANCELLED'
+		) {
+			return result;
+		}
+
+		await new Promise((resolve) => setTimeout(resolve, POLLING_INTERVAL_MS));
+	}
+}
 
 export class Sourcegeek implements INodeType {
 	description: INodeTypeDescription = {
@@ -52,14 +94,23 @@ export class Sourcegeek implements INodeType {
 			...aiPeopleSearchFields,
 			...checkConnectionStatusFields,
 			...getCompanyDataFields,
+			...getCompanyJobsFields,
+			...getCompanyPostsFields,
+			...getConversationMessagesFields,
 			...getProfileDataFields,
+			...getProfilePostsFields,
 			...getRecentAcceptedConnectionRequestsFields,
 			...getRecentMessagesFields,
 			...getRecentRecruiterMessagesFields,
 			...getToolRunFields,
+			...importCompanyFollowersFields,
 			...importContactsBasicSearchFields,
 			...importContactsRecruiterSearchFields,
 			...importContactsSalesNavSearchFields,
+			...importGroupMembersFields,
+			...importPostCommentsFields,
+			...importPostLikesFields,
+			...importProfileViewersFields,
 			...sendConnectionRequestFields,
 			...sendMessageFields,
 			...sendRecruiterInMailMessageFields,
@@ -105,11 +156,15 @@ export class Sourcegeek implements INodeType {
 								url: `${BASE_URL}/ai-people-search`,
 								headers: commonHeaders,
 								json: true,
-								timeout: 1000 * 60 * 20,
 								body: { query, maxResults },
 							},
 						);
-						outItems.push({ json: res as IDataObject, pairedItem: { item: itemIndex } });
+						const result = await pollToolRun(
+							this,
+							(res as IDataObject).toolRunId as string,
+							commonHeaders,
+						);
+						outItems.push({ json: result, pairedItem: { item: itemIndex } });
 						break;
 					}
 					case 'checkConnectionStatus': {
@@ -122,11 +177,15 @@ export class Sourcegeek implements INodeType {
 								url: `${BASE_URL}/check-connection-status`,
 								headers: commonHeaders,
 								json: true,
-								timeout: 1000 * 60 * 20,
 								body: { linkedinUrl },
 							},
 						);
-						outItems.push({ json: res as IDataObject, pairedItem: { item: itemIndex } });
+						const result = await pollToolRun(
+							this,
+							(res as IDataObject).toolRunId as string,
+							commonHeaders,
+						);
+						outItems.push({ json: result, pairedItem: { item: itemIndex } });
 						break;
 					}
 					case 'getCompanyData': {
@@ -139,11 +198,15 @@ export class Sourcegeek implements INodeType {
 								url: `${BASE_URL}/get-company-data`,
 								headers: commonHeaders,
 								json: true,
-								timeout: 1000 * 60 * 20,
 								body: { linkedinUrl },
 							},
 						);
-						outItems.push({ json: res as IDataObject, pairedItem: { item: itemIndex } });
+						const result = await pollToolRun(
+							this,
+							(res as IDataObject).toolRunId as string,
+							commonHeaders,
+						);
+						outItems.push({ json: result, pairedItem: { item: itemIndex } });
 						break;
 					}
 					case 'getProfileData': {
@@ -156,11 +219,15 @@ export class Sourcegeek implements INodeType {
 								url: `${BASE_URL}/get-profile-data`,
 								headers: commonHeaders,
 								json: true,
-								timeout: 1000 * 60 * 20,
 								body: { linkedinUrl },
 							},
 						);
-						outItems.push({ json: res as IDataObject, pairedItem: { item: itemIndex } });
+						const result = await pollToolRun(
+							this,
+							(res as IDataObject).toolRunId as string,
+							commonHeaders,
+						);
+						outItems.push({ json: result, pairedItem: { item: itemIndex } });
 						break;
 					}
 					case 'getRecentAcceptedConnectionRequests': {
@@ -172,11 +239,15 @@ export class Sourcegeek implements INodeType {
 								url: `${BASE_URL}/get-recent-accepted-connection-requests`,
 								headers: commonHeaders,
 								json: true,
-								timeout: 1000 * 60 * 20,
 								body: {},
 							},
 						);
-						outItems.push({ json: res as IDataObject, pairedItem: { item: itemIndex } });
+						const result = await pollToolRun(
+							this,
+							(res as IDataObject).toolRunId as string,
+							commonHeaders,
+						);
+						outItems.push({ json: result, pairedItem: { item: itemIndex } });
 						break;
 					}
 					case 'getRecentMessages': {
@@ -188,11 +259,15 @@ export class Sourcegeek implements INodeType {
 								url: `${BASE_URL}/get-recent-messages`,
 								headers: commonHeaders,
 								json: true,
-								timeout: 1000 * 60 * 20,
 								body: {},
 							},
 						);
-						outItems.push({ json: res as IDataObject, pairedItem: { item: itemIndex } });
+						const result = await pollToolRun(
+							this,
+							(res as IDataObject).toolRunId as string,
+							commonHeaders,
+						);
+						outItems.push({ json: result, pairedItem: { item: itemIndex } });
 						break;
 					}
 					case 'getRecentRecruiterMessages': {
@@ -204,11 +279,15 @@ export class Sourcegeek implements INodeType {
 								url: `${BASE_URL}/get-recent-recruiter-messages`,
 								headers: commonHeaders,
 								json: true,
-								timeout: 1000 * 60 * 20,
 								body: {},
 							},
 						);
-						outItems.push({ json: res as IDataObject, pairedItem: { item: itemIndex } });
+						const result = await pollToolRun(
+							this,
+							(res as IDataObject).toolRunId as string,
+							commonHeaders,
+						);
+						outItems.push({ json: result, pairedItem: { item: itemIndex } });
 						break;
 					}
 					case 'getToolRun': {
@@ -221,7 +300,6 @@ export class Sourcegeek implements INodeType {
 								url: `${BASE_URL}/get-tool-run`,
 								headers: commonHeaders,
 								json: true,
-								timeout: 1000 * 60 * 20,
 								body: { toolRunId },
 							},
 						);
@@ -239,11 +317,15 @@ export class Sourcegeek implements INodeType {
 								url: `${BASE_URL}/import-contacts-basic-search`,
 								headers: commonHeaders,
 								json: true,
-								timeout: 1000 * 60 * 20,
 								body: { url, maxResults },
 							},
 						);
-						outItems.push({ json: res as IDataObject, pairedItem: { item: itemIndex } });
+						const result = await pollToolRun(
+							this,
+							(res as IDataObject).toolRunId as string,
+							commonHeaders,
+						);
+						outItems.push({ json: result, pairedItem: { item: itemIndex } });
 						break;
 					}
 					case 'importContactsRecruiterSearch': {
@@ -257,11 +339,15 @@ export class Sourcegeek implements INodeType {
 								url: `${BASE_URL}/import-contacts-recruiter-search`,
 								headers: commonHeaders,
 								json: true,
-								timeout: 1000 * 60 * 20,
 								body: { url, maxResults },
 							},
 						);
-						outItems.push({ json: res as IDataObject, pairedItem: { item: itemIndex } });
+						const result = await pollToolRun(
+							this,
+							(res as IDataObject).toolRunId as string,
+							commonHeaders,
+						);
+						outItems.push({ json: result, pairedItem: { item: itemIndex } });
 						break;
 					}
 					case 'importContactsSalesNavSearch': {
@@ -275,11 +361,15 @@ export class Sourcegeek implements INodeType {
 								url: `${BASE_URL}/import-contacts-sales-nav-search`,
 								headers: commonHeaders,
 								json: true,
-								timeout: 1000 * 60 * 20,
 								body: { url, maxResults },
 							},
 						);
-						outItems.push({ json: res as IDataObject, pairedItem: { item: itemIndex } });
+						const result = await pollToolRun(
+							this,
+							(res as IDataObject).toolRunId as string,
+							commonHeaders,
+						);
+						outItems.push({ json: result, pairedItem: { item: itemIndex } });
 						break;
 					}
 					case 'sendConnectionRequest': {
@@ -297,11 +387,15 @@ export class Sourcegeek implements INodeType {
 								url: `${BASE_URL}/send-connection-request`,
 								headers: commonHeaders,
 								json: true,
-								timeout: 1000 * 60 * 20,
 								body,
 							},
 						);
-						outItems.push({ json: res as IDataObject, pairedItem: { item: itemIndex } });
+						const result = await pollToolRun(
+							this,
+							(res as IDataObject).toolRunId as string,
+							commonHeaders,
+						);
+						outItems.push({ json: result, pairedItem: { item: itemIndex } });
 						break;
 					}
 					case 'sendMessage': {
@@ -315,11 +409,15 @@ export class Sourcegeek implements INodeType {
 								url: `${BASE_URL}/send-message`,
 								headers: commonHeaders,
 								json: true,
-								timeout: 1000 * 60 * 20,
 								body: { linkedinUrl, message },
 							},
 						);
-						outItems.push({ json: res as IDataObject, pairedItem: { item: itemIndex } });
+						const result = await pollToolRun(
+							this,
+							(res as IDataObject).toolRunId as string,
+							commonHeaders,
+						);
+						outItems.push({ json: result, pairedItem: { item: itemIndex } });
 						break;
 					}
 					case 'sendRecruiterInMailMessage': {
@@ -343,17 +441,224 @@ export class Sourcegeek implements INodeType {
 								url: `${BASE_URL}/send-recruiter-inmail-message`,
 								headers: commonHeaders,
 								json: true,
-								timeout: 1000 * 60 * 20,
 								body,
 							},
 						);
-						outItems.push({ json: res as IDataObject, pairedItem: { item: itemIndex } });
+						const result = await pollToolRun(
+							this,
+							(res as IDataObject).toolRunId as string,
+							commonHeaders,
+						);
+						outItems.push({ json: result, pairedItem: { item: itemIndex } });
+						break;
+					}
+					case 'getCompanyJobs': {
+						const companyUrl = this.getNodeParameter('companyUrl', itemIndex) as string;
+						const maxResults = this.getNodeParameter('maxResults', itemIndex, 100) as number;
+						const res = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'sourcegeekCredentialsApi',
+							{
+								method: 'POST',
+								url: `${BASE_URL}/get-company-jobs`,
+								headers: commonHeaders,
+								json: true,
+								body: { companyUrl, maxResults },
+							},
+						);
+						const result = await pollToolRun(
+							this,
+							(res as IDataObject).toolRunId as string,
+							commonHeaders,
+						);
+						outItems.push({ json: result, pairedItem: { item: itemIndex } });
+						break;
+					}
+					case 'getCompanyPosts': {
+						const companyUrl = this.getNodeParameter('companyUrl', itemIndex) as string;
+						const maxResults = this.getNodeParameter('maxResults', itemIndex, 100) as number;
+						const res = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'sourcegeekCredentialsApi',
+							{
+								method: 'POST',
+								url: `${BASE_URL}/get-company-posts`,
+								headers: commonHeaders,
+								json: true,
+								body: { companyUrl, maxResults },
+							},
+						);
+						const result = await pollToolRun(
+							this,
+							(res as IDataObject).toolRunId as string,
+							commonHeaders,
+						);
+						outItems.push({ json: result, pairedItem: { item: itemIndex } });
+						break;
+					}
+					case 'getConversationMessages': {
+						const participantProfileUrl = this.getNodeParameter(
+							'participantProfileUrl',
+							itemIndex,
+						) as string;
+						const maxMessages = this.getNodeParameter('maxMessages', itemIndex, 100) as number;
+						const res = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'sourcegeekCredentialsApi',
+							{
+								method: 'POST',
+								url: `${BASE_URL}/get-conversation-messages`,
+								headers: commonHeaders,
+								json: true,
+								body: { participantProfileUrl, maxMessages },
+							},
+						);
+						const result = await pollToolRun(
+							this,
+							(res as IDataObject).toolRunId as string,
+							commonHeaders,
+						);
+						outItems.push({ json: result, pairedItem: { item: itemIndex } });
+						break;
+					}
+					case 'getProfilePosts': {
+						const profileUrl = this.getNodeParameter('profileUrl', itemIndex) as string;
+						const maxResults = this.getNodeParameter('maxResults', itemIndex, 100) as number;
+						const res = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'sourcegeekCredentialsApi',
+							{
+								method: 'POST',
+								url: `${BASE_URL}/get-profile-posts`,
+								headers: commonHeaders,
+								json: true,
+								body: { profileUrl, maxResults },
+							},
+						);
+						const result = await pollToolRun(
+							this,
+							(res as IDataObject).toolRunId as string,
+							commonHeaders,
+						);
+						outItems.push({ json: result, pairedItem: { item: itemIndex } });
+						break;
+					}
+					case 'importCompanyFollowers': {
+						const companyUrl = this.getNodeParameter('companyUrl', itemIndex) as string;
+						const maxResults = this.getNodeParameter('maxResults', itemIndex, 100) as number;
+						const res = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'sourcegeekCredentialsApi',
+							{
+								method: 'POST',
+								url: `${BASE_URL}/import-company-followers`,
+								headers: commonHeaders,
+								json: true,
+								body: { companyUrl, maxResults },
+							},
+						);
+						const result = await pollToolRun(
+							this,
+							(res as IDataObject).toolRunId as string,
+							commonHeaders,
+						);
+						outItems.push({ json: result, pairedItem: { item: itemIndex } });
+						break;
+					}
+					case 'importGroupMembers': {
+						const groupUrl = this.getNodeParameter('groupUrl', itemIndex) as string;
+						const maxResults = this.getNodeParameter('maxResults', itemIndex, 100) as number;
+						const res = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'sourcegeekCredentialsApi',
+							{
+								method: 'POST',
+								url: `${BASE_URL}/import-group-members`,
+								headers: commonHeaders,
+								json: true,
+								body: { groupUrl, maxResults },
+							},
+						);
+						const result = await pollToolRun(
+							this,
+							(res as IDataObject).toolRunId as string,
+							commonHeaders,
+						);
+						outItems.push({ json: result, pairedItem: { item: itemIndex } });
+						break;
+					}
+					case 'importPostComments': {
+						const postUrl = this.getNodeParameter('postUrl', itemIndex) as string;
+						const maxResults = this.getNodeParameter('maxResults', itemIndex, 100) as number;
+						const res = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'sourcegeekCredentialsApi',
+							{
+								method: 'POST',
+								url: `${BASE_URL}/import-post-comments`,
+								headers: commonHeaders,
+								json: true,
+								body: { postUrl, maxResults },
+							},
+						);
+						const result = await pollToolRun(
+							this,
+							(res as IDataObject).toolRunId as string,
+							commonHeaders,
+						);
+						outItems.push({ json: result, pairedItem: { item: itemIndex } });
+						break;
+					}
+					case 'importPostLikes': {
+						const postUrl = this.getNodeParameter('postUrl', itemIndex) as string;
+						const maxResults = this.getNodeParameter('maxResults', itemIndex, 100) as number;
+						const res = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'sourcegeekCredentialsApi',
+							{
+								method: 'POST',
+								url: `${BASE_URL}/import-post-likes`,
+								headers: commonHeaders,
+								json: true,
+								body: { postUrl, maxResults },
+							},
+						);
+						const result = await pollToolRun(
+							this,
+							(res as IDataObject).toolRunId as string,
+							commonHeaders,
+						);
+						outItems.push({ json: result, pairedItem: { item: itemIndex } });
+						break;
+					}
+					case 'importProfileViewers': {
+						const maxResults = this.getNodeParameter('maxResults', itemIndex, 100) as number;
+						const timeRange = this.getNodeParameter('timeRange', itemIndex, '') as string;
+						const body: IDataObject = { maxResults };
+						if (timeRange) {
+							body.timeRange = timeRange;
+						}
+						const res = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'sourcegeekCredentialsApi',
+							{
+								method: 'POST',
+								url: `${BASE_URL}/import-profile-viewers`,
+								headers: commonHeaders,
+								json: true,
+								body,
+							},
+						);
+						const result = await pollToolRun(
+							this,
+							(res as IDataObject).toolRunId as string,
+							commonHeaders,
+						);
+						outItems.push({ json: result, pairedItem: { item: itemIndex } });
 						break;
 					}
 				}
 			} catch (error) {
-				// This node should never fail but we want to showcase how
-				// to handle errors.
 				if (this.continueOnFail()) {
 					outItems.push({
 						json: {
@@ -363,10 +668,7 @@ export class Sourcegeek implements INodeType {
 					});
 					continue;
 				} else {
-					// Adding `itemIndex` allows other workflows to handle this error
 					if (error.context) {
-						// If the error thrown already contains the context property,
-						// only append the itemIndex
 						error.context.itemIndex = itemIndex;
 						throw error;
 					}
