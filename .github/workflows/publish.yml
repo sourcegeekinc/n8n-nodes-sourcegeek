@@ -1,0 +1,41 @@
+name: Publish to npm
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_bump:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+permissions:
+  id-token: write
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: |
+          git config user.name "Ilia Daraselia"
+          git config user.email "idarase@gmail.com"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - run: npm install
+
+      - run: git checkout -- .
+
+      - run: npm version ${{ inputs.version_bump }} -m "v%s"
+
+      - run: npm publish
+
+      - run: git push --follow-tags
