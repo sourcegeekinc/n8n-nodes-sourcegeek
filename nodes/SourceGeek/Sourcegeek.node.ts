@@ -1,5 +1,3 @@
-declare function setTimeout(callback: (...args: unknown[]) => void, ms?: number): unknown;
-
 import type {
 	IDataObject,
 	IExecuteFunctions,
@@ -7,7 +5,7 @@ import type {
 	INodeType,
 	INodeTypeDescription,
 } from 'n8n-workflow';
-import { NodeOperationError } from 'n8n-workflow';
+import { NodeOperationError, sleep } from 'n8n-workflow';
 import {
 	BASE_URL,
 	OPERATION,
@@ -64,7 +62,7 @@ async function pollToolRun(
 			return result;
 		}
 
-		await new Promise((resolve) => setTimeout(resolve, POLLING_INTERVAL_MS));
+		await sleep(POLLING_INTERVAL_MS);
 	}
 }
 
