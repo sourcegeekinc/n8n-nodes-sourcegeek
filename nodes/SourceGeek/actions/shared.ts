@@ -134,6 +134,11 @@ export const OPERATION: INodeProperties = {
 			value: 'sendRecruiterInMailMessage',
 			action: 'Send recruiter inmail message',
 		},
+		{
+			name: 'Send Sales Navigator InMail Message',
+			value: 'sendSalesNavInMailMessage',
+			action: 'Send sales navigator inmail message',
+		},
 	],
 	default: 'getProfileData',
 	displayOptions: { show: { resource: ['linkedin'] } },

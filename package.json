@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-sourcegeek",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"description": "SourceGeek n8n node for LinkedIn",
 	"keywords": [
 		"n8n-community-node-package",

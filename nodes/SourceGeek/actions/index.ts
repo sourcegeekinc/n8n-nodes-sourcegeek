@@ -21,4 +21,5 @@ export * from './importProfileViewers';
 export * from './sendConnectionRequest';
 export * from './sendMessage';
 export * from './sendRecruiterInMailMessage';
+export * from './sendSalesNavInMailMessage';
 export * from './shared';

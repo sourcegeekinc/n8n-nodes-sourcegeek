@@ -34,6 +34,7 @@ import {
 	sendConnectionRequestFields,
 	sendMessageFields,
 	sendRecruiterInMailMessageFields,
+	sendSalesNavInMailMessageFields,
 } from './actions';
 
 async function pollToolRun(
@@ -112,6 +113,7 @@ export class Sourcegeek implements INodeType {
 			...sendConnectionRequestFields,
 			...sendMessageFields,
 			...sendRecruiterInMailMessageFields,
+			...sendSalesNavInMailMessageFields,
 		],
 	};
 
@@ -427,9 +429,27 @@ export class Sourcegeek implements INodeType {
 							itemIndex,
 							'',
 						) as string;
+						const followUpMessage = this.getNodeParameter(
+							'followUpMessage',
+							itemIndex,
+							'',
+						) as string;
+						const followUpSubject = this.getNodeParameter(
+							'followUpSubject',
+							itemIndex,
+							'',
+						) as string;
+						const followUpDays = this.getNodeParameter('followUpDays', itemIndex, 3) as number;
 						const body: IDataObject = { linkedinUrl, subject, message };
 						if (linkedinProjectId) {
 							body.linkedinProjectId = linkedinProjectId;
+						}
+						if (followUpMessage) {
+							body.followUp = {
+								subject: followUpSubject || subject,
+								message: followUpMessage,
+								days: followUpDays,
+							};
 						}
 						const res = await this.helpers.httpRequestWithAuthentication.call(
 							this,
@@ -437,6 +457,30 @@ export class Sourcegeek implements INodeType {
 							{
 								method: 'POST',
 								url: `${BASE_URL}/send-recruiter-inmail-message`,
+								headers: commonHeaders,
+								json: true,
+								body,
+							},
+						);
+						const result = await pollToolRun(
+							this,
+							(res as IDataObject).toolRunId as string,
+							commonHeaders,
+						);
+						outItems.push({ json: result, pairedItem: { item: itemIndex } });
+						break;
+					}
+					case 'sendSalesNavInMailMessage': {
+						const linkedinUrl = this.getNodeParameter('linkedinUrl', itemIndex) as string;
+						const subject = this.getNodeParameter('subject', itemIndex) as string;
+						const message = this.getNodeParameter('message', itemIndex) as string;
+						const body: IDataObject = { linkedinUrl, subject, message };
+						const res = await this.helpers.httpRequestWithAuthentication.call(
+							this,
+							'sourcegeekCredentialsApi',
+							{
+								method: 'POST',
+								url: `${BASE_URL}/send-sales-nav-inmail-message`,
 								headers: commonHeaders,
 								json: true,
 								body,
