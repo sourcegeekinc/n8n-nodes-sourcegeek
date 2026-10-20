@@ -1,0 +1,2799 @@
+{
+	"tools": [
+		{
+			"name": "create_sheet",
+			"title": "Create sheet",
+			"description": "Save tabular data as a SourceGeek sheet in the user's workspace, where their team can open, share and score it. Provide the full CSV content: a header row followed by one row per record. When the CSV came from a candidate search, also pass that search's searchId so the sheet carries the full candidate details. To add more candidates to a sheet you already created, pass its artifactId: only candidates not yet in it are appended. For candidate sheets, keep a LinkedIn column so the sheet can be scored. Returns the sheet id and its URL in SourceGeek.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"title": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 120,
+						"description": "Title for the sheet artifact. When artifactId is set, the existing sheet keeps its title."
+					},
+					"csv": {
+						"type": "string",
+						"minLength": 1,
+						"description": "Complete CSV content: a header row followed by one row per record. For candidate sheets, include a LinkedIn column so the sheet can be scored later."
+					},
+					"searchId": {
+						"type": "string",
+						"description": "The searchId a candidate search returned. Pass it whenever the csv came from a candidate search — it attaches the full candidate details shown in the sheet's Details view."
+					},
+					"artifactId": {
+						"type": "string",
+						"description": "An existing sheet's artifact id. Set it to append the csv's rows to that sheet (skipping candidates it already has) instead of creating a new sheet — e.g. for a broadened or extra search for the same request."
+					}
+				},
+				"required": ["title", "csv"]
+			},
+			"annotations": {
+				"title": "Create sheet",
+				"readOnlyHint": false,
+				"destructiveHint": false,
+				"openWorldHint": false
+			}
+		},
+		{
+			"name": "get_employee_contact_details",
+			"title": "Get employee profile",
+			"description": "Get detailed LinkedIn profile/contact data from RapidAPI by LinkedIn username or LinkedIn profile URL. This is the preferred source for a specific person's LinkedIn data — use it over Exa/web search whenever a profile URL or username is known. Enriches a candidate with work history, education, skills, headline, summary, and location. Returns real RapidAPI fields only.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"linkedinUsernameOrUrl": {
+						"type": "string",
+						"minLength": 1,
+						"description": "A LinkedIn username such as 'janedoe' or a profile URL such as 'https://www.linkedin.com/in/janedoe'."
+					}
+				},
+				"required": ["linkedinUsernameOrUrl"]
+			},
+			"annotations": {
+				"title": "Get employee profile",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "list_memories",
+			"title": "List memories",
+			"description": "List long-term memories: the current user's personal ones and the workspace-shared ones. Pass keys to read those memories in full, or query to get the ones matching a topic; with neither, lists everything.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"keys": {
+						"type": "array",
+						"items": {
+							"type": "string",
+							"minLength": 1,
+							"maxLength": 80
+						},
+						"maxItems": 20,
+						"description": "Exact memory keys to read, from the saved key index."
+					},
+					"query": {
+						"type": "string",
+						"maxLength": 500,
+						"description": "What the memories to find are about, in any words, e.g. 'acme hiring bar'."
+					}
+				},
+				"required": []
+			},
+			"annotations": {
+				"title": "List memories",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": false
+			}
+		},
+		{
+			"name": "create_rediscovery_shortlist",
+			"title": "Create rediscovery shortlist",
+			"description": "Create a markdown shortlist from a talent rediscovery sheet with source context, prior status, match rationale, and recommended re-engagement actions.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"artifactId": {
+						"type": "string",
+						"description": "The rediscovery sheet artifact id to shortlist."
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 20,
+						"description": "Maximum number of candidates to include.",
+						"default": 5
+					},
+					"title": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 120,
+						"description": "Optional title for the generated shortlist text artifact."
+					}
+				},
+				"required": ["artifactId"]
+			},
+			"annotations": {
+				"title": "Create rediscovery shortlist",
+				"readOnlyHint": false,
+				"destructiveHint": false,
+				"openWorldHint": false
+			}
+		},
+		{
+			"name": "create_shortlist",
+			"title": "Create shortlist",
+			"description": "Create an evidence-backed markdown shortlist from a scored candidate sheet. The tool ranks candidates by score, writes table and dossier sections, labels confirmed evidence, inferred fit, missing information, risks, next actions, and outreach angles, then saves the shortlist as a text artifact.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"artifactId": {
+						"type": "string",
+						"description": "The scored sheet artifact id to shortlist."
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 20,
+						"description": "Maximum number of candidates to include.",
+						"default": 5
+					},
+					"title": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 120,
+						"description": "Optional title for the generated shortlist text artifact."
+					}
+				},
+				"required": ["artifactId"]
+			},
+			"annotations": {
+				"title": "Create shortlist",
+				"readOnlyHint": false,
+				"destructiveHint": false,
+				"openWorldHint": false
+			}
+		},
+		{
+			"name": "enrich_entity",
+			"title": "Enrich a person or company",
+			"description": "Enrich a known entity (description or URL) with specific structured string fields and citation-backed reasoning.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"input": {
+						"type": "string",
+						"minLength": 3,
+						"maxLength": 4000,
+						"description": "Entity name, description, or canonical URL to enrich."
+					},
+					"fields": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"name": {
+									"type": "string",
+									"minLength": 1,
+									"maxLength": 80,
+									"description": "JSON field key, e.g. founding_date."
+								},
+								"description": {
+									"type": "string",
+									"minLength": 3,
+									"maxLength": 500,
+									"description": "What this field should contain."
+								}
+							},
+							"required": ["name", "description"]
+						},
+						"minItems": 1,
+						"maxItems": 10,
+						"description": "Fields to populate (max 10)."
+					}
+				},
+				"required": ["input", "fields"]
+			},
+			"annotations": {
+				"title": "Enrich a person or company",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "esco_search",
+			"title": "Search ESCO occupations and skills",
+			"description": "Search the European Commission's ESCO classification (European Skills, Competences, Qualifications and Occupations) for occupations or skills matching a job title, synonym, or skill name in any ESCO language. Returns ranked matches with their ESCO URI, preferred title, the label that matched, and (for occupations) the ISCO-based ESCO code.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"query": {
+						"type": "string",
+						"minLength": 2,
+						"maxLength": 200,
+						"description": "Job title, occupation synonym, or skill to look up, e.g. 'software developer', 'IC-verpleegkundige', 'Python'."
+					},
+					"type": {
+						"enum": ["occupation", "skill"],
+						"type": "string",
+						"description": "Search occupations (job roles) or skills (skills, competences and knowledge). Defaults to occupation.",
+						"default": "occupation"
+					},
+					"language": {
+						"enum": [
+							"ar",
+							"bg",
+							"cs",
+							"da",
+							"de",
+							"el",
+							"en",
+							"es",
+							"et",
+							"fi",
+							"fr",
+							"ga",
+							"hr",
+							"hu",
+							"is",
+							"it",
+							"lt",
+							"lv",
+							"mt",
+							"nl",
+							"no",
+							"pl",
+							"pt",
+							"ro",
+							"sk",
+							"sl",
+							"sv"
+						],
+						"type": "string",
+						"description": "ISO 639-1 language for labels and descriptions (e.g. 'nl', 'de', 'fr'). Defaults to 'en'. Match the user's language when they search in it.",
+						"default": "en"
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 50,
+						"description": "Number of matches to return (1-50, default 10).",
+						"default": 10
+					},
+					"offset": {
+						"type": "integer",
+						"minimum": 0,
+						"description": "Number of matches to skip, for paging past the first page.",
+						"default": 0
+					}
+				},
+				"required": ["query"]
+			},
+			"annotations": {
+				"title": "Search ESCO occupations and skills",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "esco_occupation",
+			"title": "Get ESCO occupation",
+			"description": "Fetch an ESCO occupation by URI: description, ESCO/ISCO codes, alternative job titles, broader and narrower occupations, and the essential and optional skills/knowledge the EU taxonomy lists for it.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"uri": {
+						"type": "string",
+						"pattern": "^http://data\\.europa\\.eu/esco/occupation/",
+						"description": "ESCO occupation URI, e.g. http://data.europa.eu/esco/occupation/<uuid>."
+					},
+					"language": {
+						"enum": [
+							"ar",
+							"bg",
+							"cs",
+							"da",
+							"de",
+							"el",
+							"en",
+							"es",
+							"et",
+							"fi",
+							"fr",
+							"ga",
+							"hr",
+							"hu",
+							"is",
+							"it",
+							"lt",
+							"lv",
+							"mt",
+							"nl",
+							"no",
+							"pl",
+							"pt",
+							"ro",
+							"sk",
+							"sl",
+							"sv"
+						],
+						"type": "string",
+						"description": "ISO 639-1 language for labels and descriptions (e.g. 'nl', 'de', 'fr'). Defaults to 'en'. Match the user's language when they search in it.",
+						"default": "en"
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 200,
+						"description": "Maximum items returned per related list (1-200, default 50). Each list also reports its full total.",
+						"default": 50
+					}
+				},
+				"required": ["uri"]
+			},
+			"annotations": {
+				"title": "Get ESCO occupation",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "esco_skill",
+			"title": "Get ESCO skill",
+			"description": "Fetch an ESCO skill or knowledge concept by URI: description, skill type, reuse level, broader and narrower skills, and the occupations for which it is essential or optional.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"uri": {
+						"type": "string",
+						"pattern": "^http://data\\.europa\\.eu/esco/skill/",
+						"description": "ESCO skill URI, e.g. http://data.europa.eu/esco/skill/<uuid>."
+					},
+					"language": {
+						"enum": [
+							"ar",
+							"bg",
+							"cs",
+							"da",
+							"de",
+							"el",
+							"en",
+							"es",
+							"et",
+							"fi",
+							"fr",
+							"ga",
+							"hr",
+							"hu",
+							"is",
+							"it",
+							"lt",
+							"lv",
+							"mt",
+							"nl",
+							"no",
+							"pl",
+							"pt",
+							"ro",
+							"sk",
+							"sl",
+							"sv"
+						],
+						"type": "string",
+						"description": "ISO 639-1 language for labels and descriptions (e.g. 'nl', 'de', 'fr'). Defaults to 'en'. Match the user's language when they search in it.",
+						"default": "en"
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 200,
+						"description": "Maximum items returned per related list (1-200, default 50). Each list also reports its full total.",
+						"default": 50
+					}
+				},
+				"required": ["uri"]
+			},
+			"annotations": {
+				"title": "Get ESCO skill",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "cbs_search_tables",
+			"title": "Search CBS statistics tables",
+			"description": "Search the CBS (Statistics Netherlands) StatLine open-data catalog for statistical tables by keyword. Every word must appear in a table's title or description. Returns matching tables with their id, title, summary, status (regular or discontinued), last modification, number of values and a StatLine link; the table's own description adds the period covered and update frequency.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"query": {
+						"type": "string",
+						"minLength": 2,
+						"maxLength": 200,
+						"description": "Dutch keywords to find in table titles and descriptions, e.g. 'vacatures beroep', 'werkloosheid provincie', 'cao lonen'."
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 50,
+						"description": "Number of tables to return (1-50, default 10).",
+						"default": 10
+					}
+				},
+				"required": ["query"]
+			},
+			"annotations": {
+				"title": "Search CBS statistics tables",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "cbs_table_info",
+			"title": "Get CBS table structure",
+			"description": "Describe a CBS (Statistics Netherlands) StatLine table: title, summary, period, status, its topics (measured values with unit and decimals) and its dimensions (e.g. region, period, sector, occupation) with their category keys and labels. Periods are listed newest last and marked final or provisional.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"tableId": {
+						"type": "string",
+						"pattern": "^[0-9A-Za-z]{5,12}$",
+						"description": "CBS StatLine table identifier, e.g. '83599NED'."
+					},
+					"categorySearch": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 100,
+						"description": "Only list categories whose label or key contains this text, e.g. 'Utrecht', 'ICT', '2025'."
+					},
+					"dimension": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 100,
+						"description": "Dimension key that categorySearch applies to, e.g. 'RegioS'. Omit to search every dimension."
+					},
+					"categoryLimit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 500,
+						"description": "Maximum categories listed per dimension (1-500, default 50); periods list the most recent ones. Each dimension also reports its full categoryCount.",
+						"default": 50
+					}
+				},
+				"required": ["tableId"]
+			},
+			"annotations": {
+				"title": "Get CBS table structure",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "cbs_query_data",
+			"title": "Get CBS statistics",
+			"description": "Fetch observations from a CBS (Statistics Netherlands) StatLine table, filtered by dimension category keys. Rows carry the category label for each dimension and the value of each requested topic; the response lists the topics' units and says whether rows were cut off at the limit.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"tableId": {
+						"type": "string",
+						"pattern": "^[0-9A-Za-z]{5,12}$",
+						"description": "CBS StatLine table identifier, e.g. '83599NED'."
+					},
+					"filters": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"dimension": {
+									"type": "string",
+									"minLength": 1,
+									"description": "Dimension key, e.g. 'RegioS' or 'Perioden'."
+								},
+								"categories": {
+									"type": "array",
+									"items": {
+										"type": "string",
+										"minLength": 1
+									},
+									"minItems": 1,
+									"maxItems": 100,
+									"description": "Category keys to keep, e.g. ['NL01', 'PV27']."
+								}
+							},
+							"required": ["dimension", "categories"]
+						},
+						"maxItems": 10,
+						"description": "Category filters per dimension. Dimensions without a filter return every category.",
+						"default": []
+					},
+					"latestPeriods": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 60,
+						"description": "Keep only the N most recent periods. Ignored when filters already select periods."
+					},
+					"topics": {
+						"type": "array",
+						"items": {
+							"type": "string",
+							"minLength": 1
+						},
+						"maxItems": 50,
+						"description": "Topic keys from the table description to return, e.g. ['M001298']. Omit for every topic in the table."
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 1000,
+						"description": "Maximum rows to return (1-1000, default 200).",
+						"default": 200
+					}
+				},
+				"required": ["tableId"]
+			},
+			"annotations": {
+				"title": "Get CBS statistics",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "find_all_entities",
+			"title": "Find people or companies by criteria",
+			"description": "Discover and evaluate people or companies against explicit match conditions. Returns verified matches with reasoning when complete; may return a findall id if the time budget is exceeded.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"entityType": {
+						"enum": ["people", "companies"],
+						"type": "string",
+						"description": "Whether to find people or companies."
+					},
+					"objective": {
+						"type": "string",
+						"minLength": 5,
+						"maxLength": 3000,
+						"description": "Natural language goal for the entity search."
+					},
+					"matchConditions": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"name": {
+									"type": "string",
+									"minLength": 1,
+									"maxLength": 120
+								},
+								"description": {
+									"type": "string",
+									"minLength": 5,
+									"maxLength": 4000
+								}
+							},
+							"required": ["name", "description"]
+						},
+						"minItems": 1,
+						"maxItems": 10,
+						"description": "Named criteria each candidate must satisfy."
+					},
+					"matchLimit": {
+						"type": "integer",
+						"minimum": 5,
+						"maximum": 50,
+						"description": "Maximum verified matches to return (default 25, max 50). Limits above 25 use the core generator and cost several times more credits — only go higher when the user needs a larger list.",
+						"default": 25
+					}
+				},
+				"required": ["entityType", "objective", "matchConditions"]
+			},
+			"annotations": {
+				"title": "Find people or companies by criteria",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "read_artifact",
+			"title": "Read sheet or document",
+			"description": "Read the latest content of an existing artifact. Returns the artifact metadata and its raw content (CSV for sheets, markdown for text). Use this to access artifact data for further processing — e.g. exporting to Google Sheets, filtering rows, or feeding into another tool.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The artifact id to read. If omitted, reads the latest artifact in the thread."
+					}
+				},
+				"required": []
+			},
+			"annotations": {
+				"title": "Read sheet or document",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": false
+			}
+		},
+		{
+			"name": "read_shortlist_feedback",
+			"title": "Read shortlist feedback",
+			"description": "Read review feedback captured on a shortlist or candidate sheet artifact. Returns each reviewer's decision (advance/maybe/reject), structured signals (e.g. too_junior, wrong_domain, similar_profile_wanted), and free-text comments, grouped per candidate. Use it to summarize hiring-team calibration and propose role-plan updates.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"artifactId": {
+						"type": "string",
+						"description": "The shortlist or sheet artifact id to read feedback for. If omitted, uses the latest artifact in the thread."
+					}
+				},
+				"required": []
+			},
+			"annotations": {
+				"title": "Read shortlist feedback",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": false
+			}
+		},
+		{
+			"name": "remember",
+			"title": "Remember a fact",
+			"description": "Remember one stable fact or preference — for the current user, or (shared: true) for the whole workspace.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"key": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 80,
+						"pattern": "^[a-z0-9_.-]+$"
+					},
+					"shared": {
+						"type": "boolean",
+						"description": "Save into the workspace-shared bucket every member sees. Only when the user explicitly asked for a team-wide rule."
+					},
+					"value": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 4000
+					}
+				},
+				"required": ["key", "value"]
+			},
+			"annotations": {
+				"title": "Remember a fact",
+				"readOnlyHint": false,
+				"destructiveHint": false,
+				"openWorldHint": false
+			}
+		},
+		{
+			"name": "list_workspace_context",
+			"title": "List workspace context",
+			"description": "List the workspace's context entries: key, title, source (auto-refreshed or manually edited), last update and a short excerpt.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {},
+				"required": []
+			},
+			"annotations": {
+				"title": "List workspace context",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": false
+			}
+		},
+		{
+			"name": "get_workspace_context",
+			"title": "Get workspace context entry",
+			"description": "Read one workspace context entry (full markdown content) by its key, e.g. tone-of-voice, company-profile, company-background, company-jobs.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"key": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 80,
+						"description": "The entry key."
+					}
+				},
+				"required": ["key"]
+			},
+			"annotations": {
+				"title": "Get workspace context entry",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": false
+			}
+		},
+		{
+			"name": "upsert_workspace_context",
+			"title": "Save workspace context entry",
+			"description": "Create or update one workspace context entry (key, title, markdown content). Workspace admins only; manual entries survive the daily auto-refresh.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"key": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 80,
+						"pattern": "^[a-z0-9]+(?:[-.][a-z0-9]+)*$",
+						"description": "Kebab-case entry key. Reuse an existing key to update it."
+					},
+					"title": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 120,
+						"description": "Short human-readable title."
+					},
+					"content": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 8000,
+						"description": "The entry's markdown content."
+					}
+				},
+				"required": ["key", "title", "content"]
+			},
+			"annotations": {
+				"title": "Save workspace context entry",
+				"readOnlyHint": false,
+				"destructiveHint": false,
+				"openWorldHint": false
+			}
+		},
+		{
+			"name": "delete_workspace_context",
+			"title": "Delete workspace context entry",
+			"description": "Delete one workspace context entry by key. Workspace admins only; auto-refreshed entries come back on the next daily refresh.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"key": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 80,
+						"description": "The entry key."
+					}
+				},
+				"required": ["key"]
+			},
+			"annotations": {
+				"title": "Delete workspace context entry",
+				"readOnlyHint": false,
+				"destructiveHint": true,
+				"openWorldHint": false
+			}
+		},
+		{
+			"name": "score_leads",
+			"title": "Score candidates",
+			"description": "Score every candidate in an existing SourceGeek sheet against a job description or hiring criteria, writing a Score column (with reasoning) back to the sheet. Pass the sheet's artifactId and the requirements as text (fetch a job posting URL yourself first). Spends credits per scored row. Scoring runs in the background: if it has not finished within a minute the result says status 'running' — read the sheet again later to see the scores.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"artifactId": {
+						"type": "string",
+						"description": "The artifact id to score. Required; do not score an implicit latest sheet."
+					},
+					"targetDescription": {
+						"type": "string",
+						"minLength": 1,
+						"description": "The job description, role requirements, hiring criteria. Do not pass URLs here."
+					}
+				},
+				"required": ["artifactId", "targetDescription"]
+			},
+			"annotations": {
+				"title": "Score candidates",
+				"readOnlyHint": false,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "search_rediscovered_talent",
+			"title": "Search previously known candidates",
+			"description": "Search previously known candidates from SourceGeek workspace sheets and merge connector-sourced candidates before external sourcing. Returns the matched candidates as CSV with source, prior status, last contact, match confidence, contact risk, and recommended re-engagement actions as columns. It does not create a sheet.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"roleDescription": {
+						"type": "string",
+						"minLength": 10,
+						"maxLength": 4000,
+						"description": "The current role target, requirements, or search criteria used to match previously known candidates."
+					},
+					"externalCandidates": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"atsId": {
+									"type": "string"
+								},
+								"company": {
+									"type": "string"
+								},
+								"confidence": {
+									"enum": ["low", "medium", "high"],
+									"type": "string"
+								},
+								"contactRisk": {
+									"enum": ["low", "medium", "high"],
+									"type": "string"
+								},
+								"doNotContact": {
+									"type": "boolean"
+								},
+								"email": {
+									"type": "string"
+								},
+								"lastContactDate": {
+									"type": "string"
+								},
+								"linkedinUrl": {
+									"type": "string"
+								},
+								"location": {
+									"type": "string"
+								},
+								"matchReason": {
+									"type": "string",
+									"minLength": 1,
+									"description": "Why this previously known candidate may fit the current role."
+								},
+								"name": {
+									"type": "string",
+									"minLength": 1
+								},
+								"priorOutcome": {
+									"type": "string"
+								},
+								"priorStatus": {
+									"enum": [
+										"rejected",
+										"interviewed",
+										"applicant",
+										"referral",
+										"warm-conversation",
+										"shortlisted",
+										"never-contacted",
+										"do-not-contact",
+										"unknown"
+									],
+									"type": "string"
+								},
+								"recommendedAction": {
+									"type": "string"
+								},
+								"source": {
+									"enum": [
+										"sourcegeek",
+										"recruitee",
+										"ashby",
+										"gmail",
+										"outlook",
+										"slack",
+										"notion",
+										"google-drive",
+										"onedrive",
+										"referral",
+										"unknown"
+									],
+									"type": "string"
+								},
+								"sourceDetail": {
+									"type": "string"
+								},
+								"title": {
+									"type": "string"
+								}
+							},
+							"required": ["matchReason", "name", "source"]
+						},
+						"maxItems": 50,
+						"description": "Candidates found via connected sources such as Recruitee MCP search, Gmail, Outlook, Slack, Notion, Google Drive, or OneDrive.",
+						"default": []
+					},
+					"title": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 120,
+						"description": "Optional title for the generated rediscovery sheet."
+					}
+				},
+				"required": ["roleDescription"]
+			},
+			"annotations": {
+				"title": "Search previously known candidates",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": false
+			}
+		},
+		{
+			"name": "fast_search_leads",
+			"title": "Search candidates",
+			"description": "Search CoreSignal for professionals using a natural language query. Use this for finding recruiting candidates or contacts by title, company, location, seniority, industry, skills, or other professional criteria. Returns the matched candidates as CSV (Name, Title, Company, Location, LinkedIn) plus a searchId and a suggested title — it does not create a sheet. totalMatches is how many profiles the interpreted query matched before paging: 0 means the criteria as phrased matched nobody, so rephrase (fewer exclusions, broader titles or locations) rather than repeat the same query.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"query": {
+						"type": "string",
+						"minLength": 10,
+						"maxLength": 3000,
+						"description": "Natural language search query, e.g. 'VP Engineering at B2B SaaS companies in Amsterdam with 50-500 employees'."
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 20,
+						"description": "Requested number of candidates to return (1-20). Defaults to 10 when omitted. The data source returns at most 20 results per search.",
+						"default": 10
+					}
+				},
+				"required": ["query"]
+			},
+			"annotations": {
+				"title": "Search candidates",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "fast_search_companies",
+			"title": "Search companies",
+			"description": "Search CoreSignal for companies using a natural language query. Use this for finding companies by industry, headcount, location, funding, growth signals, or keywords. Sorting can be requested inside the query (supported fields: employees_count, last_funding_amount, followers_count, active_job_postings_count, num_news_articles, last_updated). Returns the matched companies as CSV (Name, Industry, Size, Employees, HQ Country, Website, LinkedIn) plus a suggested title — it does not create a sheet.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"query": {
+						"type": "string",
+						"minLength": 10,
+						"maxLength": 3000,
+						"description": "Natural language search query, e.g. 'B2B SaaS companies in Amsterdam with 50-500 employees, sorted by employees_count'."
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 20,
+						"description": "Requested number of companies to return (1-20). Defaults to 10 when omitted. The data source returns at most 20 results per search.",
+						"default": 10
+					}
+				},
+				"required": ["query"]
+			},
+			"annotations": {
+				"title": "Search companies",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "fast_search_jobs",
+			"title": "Search job postings",
+			"description": "Search CoreSignal for job postings using a natural language query. Use this for finding open roles by title, company, location, or hiring signals (e.g. which companies are hiring for a role). Sorting can be requested inside the query (supported fields: last_updated, company_employees_count). Returns the matched postings as CSV (Title, Company, Location, Posted) plus a suggested title — it does not create a sheet.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"query": {
+						"type": "string",
+						"minLength": 10,
+						"maxLength": 3000,
+						"description": "Natural language search query, e.g. 'Senior backend engineer roles at fintech companies in Berlin, sorted by last_updated'."
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 20,
+						"description": "Requested number of job postings to return (1-20). Defaults to 10 when omitted. The data source returns at most 20 results per search.",
+						"default": 10
+					}
+				},
+				"required": ["query"]
+			},
+			"annotations": {
+				"title": "Search job postings",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "forget",
+			"title": "Forget a memory",
+			"description": "Delete one long-term memory — the current user's, or (shared: true) a workspace-shared one.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"key": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 80
+					},
+					"shared": {
+						"type": "boolean",
+						"description": "Delete from the workspace-shared bucket instead."
+					}
+				},
+				"required": ["key"]
+			},
+			"annotations": {
+				"title": "Forget a memory",
+				"readOnlyHint": false,
+				"destructiveHint": true,
+				"openWorldHint": false
+			}
+		},
+		{
+			"name": "precision_search_leads",
+			"title": "Search candidates (precision)",
+			"description": "Higher-precision CoreSignal candidate search using the reasoning endpoint. Interprets the natural language query more carefully than the fast search and returns better-matched candidates plus an explanation of how it interpreted the query. More expensive and rate-limited (~10/hour) — use when match quality matters. Returns the matched candidates as CSV (Name, Title, Company, Location, LinkedIn) plus a searchId; it does not create a sheet. totalMatches is how many profiles the interpreted query matched before paging: 0 means the criteria as phrased matched nobody, so relax the query rather than repeat it.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"query": {
+						"type": "string",
+						"minLength": 10,
+						"maxLength": 3000,
+						"description": "Natural language search query, e.g. 'VP Engineering at B2B SaaS companies in Amsterdam with 50-500 employees'."
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 20,
+						"description": "Requested number of candidates to return (1-20). Defaults to 10 when omitted. The data source returns at most 20 results per search.",
+						"default": 10
+					}
+				},
+				"required": ["query"]
+			},
+			"annotations": {
+				"title": "Search candidates (precision)",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "precision_search_companies",
+			"title": "Search companies (precision)",
+			"description": "Higher-precision CoreSignal company search using the reasoning endpoint. Interprets the natural language query more carefully than the fast search and returns better-matched companies plus an explanation of how it interpreted the query. More expensive and rate-limited (~10/hour, shared with the other precision searches) — use when match quality matters. Returns the matched companies as CSV (Name, Industry, Size, Employees, HQ Country, Website, LinkedIn) plus a suggested title; it does not create a sheet.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"query": {
+						"type": "string",
+						"minLength": 10,
+						"maxLength": 3000,
+						"description": "Natural language search query, e.g. 'B2B SaaS companies in Amsterdam with 50-500 employees, sorted by employees_count'."
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 20,
+						"description": "Requested number of companies to return (1-20). Defaults to 10 when omitted. The data source returns at most 20 results per search.",
+						"default": 10
+					}
+				},
+				"required": ["query"]
+			},
+			"annotations": {
+				"title": "Search companies (precision)",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "precision_search_jobs",
+			"title": "Search job postings (precision)",
+			"description": "Higher-precision CoreSignal job-posting search using the reasoning endpoint. Interprets the natural language query more carefully than the fast search and returns better-matched postings plus an explanation of how it interpreted the query. More expensive and rate-limited (~10/hour, shared with the other precision searches) — use when match quality matters. Returns the matched postings as CSV (Title, Company, Location, Posted) plus a suggested title; it does not create a sheet.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"query": {
+						"type": "string",
+						"minLength": 10,
+						"maxLength": 3000,
+						"description": "Natural language search query, e.g. 'Senior backend engineer roles at fintech companies in Berlin, sorted by last_updated'."
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 20,
+						"description": "Requested number of job postings to return (1-20). Defaults to 10 when omitted. The data source returns at most 20 results per search.",
+						"default": 10
+					}
+				},
+				"required": ["query"]
+			},
+			"annotations": {
+				"title": "Search job postings (precision)",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_company_details",
+			"title": "Get company profile",
+			"description": "Fetch a LinkedIn company page by vanity name or URL: name, tagline, description, industries, specialities, staff count and range, follower count, headquarters, locations, website, founded year and the numeric companyId.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"companyUsernameOrUrl": {
+						"type": "string",
+						"minLength": 1,
+						"description": "A LinkedIn company vanity name such as 'google' or a company URL such as 'https://www.linkedin.com/company/google'."
+					}
+				},
+				"required": ["companyUsernameOrUrl"]
+			},
+			"annotations": {
+				"title": "Get company profile",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_company_details_by_id",
+			"title": "Get company profile by id",
+			"description": "Fetch a LinkedIn company page by its numeric company id. Returns the company page: description, industries, headcount, HQ, website, vanity username.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"companyId": {
+						"type": "string",
+						"pattern": "^\\d+$",
+						"description": "Numeric LinkedIn company id (e.g. '1441'). The company page lookup by vanity name or URL returns it as companyId."
+					}
+				},
+				"required": ["companyId"]
+			},
+			"annotations": {
+				"title": "Get company profile by id",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_search_companies",
+			"title": "Search company profiles",
+			"description": "Search LinkedIn company pages by keyword with optional filters: LinkedIn location ids, industry ids, company-size codes (A=1-10 … H=10,001+ employees) and hasJobs. Returns companies (name, username, companyId, tagline, industries, staff range) plus total and paging.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"keyword": {
+						"type": "string",
+						"minLength": 1,
+						"description": "Company name or keyword, e.g. 'recruitment'."
+					},
+					"locationIds": {
+						"type": "array",
+						"items": {
+							"type": "integer"
+						},
+						"description": "LinkedIn geo ids (numeric part only)."
+					},
+					"industryIds": {
+						"type": "array",
+						"items": {
+							"type": "integer"
+						},
+						"description": "LinkedIn industry ids."
+					},
+					"companySizes": {
+						"type": "array",
+						"items": {
+							"enum": ["A", "B", "C", "D", "E", "F", "G", "H"],
+							"type": "string"
+						},
+						"description": "Size buckets: A=1-10 employees, B=11-50 employees, C=51-200 employees, D=201-500 employees, E=501-1,000 employees, F=1,001-5,000 employees, G=5,001-10,000 employees, H=10,001+ employees."
+					},
+					"hasJobs": {
+						"type": "boolean",
+						"description": "Only companies with open LinkedIn jobs."
+					},
+					"page": {
+						"type": "integer",
+						"minimum": 1,
+						"description": "1-based results page.",
+						"default": 1
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 50,
+						"description": "Maximum items to return (1-50, default 10). Results beyond the provider's page are not fetched.",
+						"default": 10
+					}
+				},
+				"required": ["keyword"]
+			},
+			"annotations": {
+				"title": "Search company profiles",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_company_jobs",
+			"title": "Get a company's open jobs",
+			"description": "List a company's current LinkedIn job postings (title, url, location, posted date, job id) by company vanity name, URL or numeric id, newest first by default. Paged; returns paging info.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"companyUsernameOrUrl": {
+						"type": "string",
+						"minLength": 1,
+						"description": "A LinkedIn company vanity name such as 'google' or a company URL such as 'https://www.linkedin.com/company/google'."
+					},
+					"page": {
+						"type": "integer",
+						"minimum": 1,
+						"description": "1-based results page.",
+						"default": 1
+					},
+					"sort": {
+						"enum": ["mostRecent", "oldest", "mostRelevant"],
+						"type": "string",
+						"description": "Ordering; defaults to mostRecent."
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 50,
+						"description": "Maximum items to return (1-50, default 10). Results beyond the provider's page are not fetched.",
+						"default": 10
+					}
+				},
+				"required": ["companyUsernameOrUrl"]
+			},
+			"annotations": {
+				"title": "Get a company's open jobs",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_company_by_domain",
+			"title": "Find company profile by domain",
+			"description": "Look up a LinkedIn company page by website domain. Returns the company page (name, description, industries, headcount, headquarters, website and companyId), or an error when LinkedIn has no page mapped to the domain.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"domain": {
+						"type": "string",
+						"minLength": 3,
+						"description": "Website domain such as 'acme.com' (scheme and path are stripped)."
+					}
+				},
+				"required": ["domain"]
+			},
+			"annotations": {
+				"title": "Find company profile by domain",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_company_insights",
+			"title": "Get company employee insights",
+			"description": "Premium LinkedIn company insights (5 credits): total headcount with 6m/1y growth and monthly history, headcount and growth by function, monthly hires, job openings by function, median employee tenure and notable recent alumni. Company vanity name or URL required.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"companyUsernameOrUrl": {
+						"type": "string",
+						"minLength": 1,
+						"description": "A LinkedIn company vanity name such as 'google' or a company URL such as 'https://www.linkedin.com/company/google'."
+					}
+				},
+				"required": ["companyUsernameOrUrl"]
+			},
+			"annotations": {
+				"title": "Get company employee insights",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_company_jobs_count",
+			"title": "Count a company's open jobs",
+			"description": "Return the total number of open LinkedIn job postings for a company by numeric company id.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"companyId": {
+						"type": "string",
+						"pattern": "^\\d+$",
+						"description": "Numeric LinkedIn company id (e.g. '1441'). The company page lookup by vanity name or URL returns it as companyId."
+					}
+				},
+				"required": ["companyId"]
+			},
+			"annotations": {
+				"title": "Count a company's open jobs",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_company_similar_pages",
+			"title": "Find similar company profiles",
+			"description": "List the company pages LinkedIn surfaces as 'people also viewed' for a company (name, username, companyId, industries, staff count) — peers and competitors.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"companyUsernameOrUrl": {
+						"type": "string",
+						"minLength": 1,
+						"description": "A LinkedIn company vanity name such as 'google' or a company URL such as 'https://www.linkedin.com/company/google'."
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 50,
+						"description": "Maximum items to return (1-50, default 10). Results beyond the provider's page are not fetched.",
+						"default": 10
+					}
+				},
+				"required": ["companyUsernameOrUrl"]
+			},
+			"annotations": {
+				"title": "Find similar company profiles",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_search_people",
+			"title": "Search employees",
+			"description": "Search LinkedIn members by keywords, title keyword, first/last name, current company, school and geo id. Returns fullName, headline, location, username and profile URL per hit plus the total; pages of 10 via start (0, 10, 20…). Non-public profiles are filtered out, so pages can be short.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"keywords": {
+						"type": "string",
+						"description": "Free-text keywords (e.g. 'recruiter fintech')."
+					},
+					"keywordTitle": {
+						"type": "string",
+						"description": "Keyword that must appear in the current title."
+					},
+					"firstName": {
+						"type": "string"
+					},
+					"lastName": {
+						"type": "string"
+					},
+					"company": {
+						"type": "string",
+						"description": "Current company name keyword."
+					},
+					"currentCompanyIds": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"description": "Numeric LinkedIn company ids to restrict current employer."
+					},
+					"keywordSchool": {
+						"type": "string"
+					},
+					"schoolId": {
+						"type": "string",
+						"description": "Numeric LinkedIn school id."
+					},
+					"geoId": {
+						"type": "string",
+						"description": "LinkedIn geo id (numeric part, e.g. '102011674')."
+					},
+					"start": {
+						"type": "string",
+						"description": "Provider offset for the next page (echoed back as nextStart by the previous call). Omit for the first page."
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 50,
+						"description": "Maximum items to return (1-50, default 10). Results beyond the provider's page are not fetched.",
+						"default": 10
+					}
+				},
+				"required": []
+			},
+			"annotations": {
+				"title": "Search employees",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_search_locations",
+			"title": "Look up locations",
+			"description": "Resolve a city, region or country name to LinkedIn geo ids (geoId + canonical name), e.g. 'Amsterdam' → 102011674 'Amsterdam, North Holland, Netherlands'.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"keyword": {
+						"type": "string",
+						"minLength": 2,
+						"description": "Place name to look up, e.g. 'Amsterdam' or 'Netherlands'."
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 50,
+						"description": "Maximum items to return (1-50, default 10). Results beyond the provider's page are not fetched.",
+						"default": 10
+					}
+				},
+				"required": ["keyword"]
+			},
+			"annotations": {
+				"title": "Look up locations",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_profile_by_url",
+			"title": "Get employee profile by URL",
+			"description": "Fetch a full LinkedIn profile (headline, summary, positions, education, skills, location) from any profile URL, including hashed /in/ACoAA… URLs.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"profileUrl": {
+						"type": "string",
+						"format": "uri",
+						"description": "Full LinkedIn profile URL."
+					}
+				},
+				"required": ["profileUrl"]
+			},
+			"annotations": {
+				"title": "Get employee profile by URL",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_profile_posts",
+			"title": "Get a person's posts",
+			"description": "Fetch a member's LinkedIn posts (text, posted date, reaction/comment/repost counts, urn, shareUrn, url, attached job or article), newest first. Optional postedAfter date filter; paged via start (0, 50, 100…) and paginationToken.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"usernameOrUrl": {
+						"type": "string",
+						"minLength": 1,
+						"description": "A LinkedIn member username such as 'janedoe' or a profile URL such as 'https://www.linkedin.com/in/janedoe'."
+					},
+					"postedAfter": {
+						"type": "string",
+						"description": "Only posts newer than this date (ISO, e.g. '2026-01-01')."
+					},
+					"start": {
+						"type": "string",
+						"description": "Provider offset for the next page (echoed back as nextStart by the previous call). Omit for the first page."
+					},
+					"paginationToken": {
+						"type": "string",
+						"description": "Opaque token from the previous call's paginationToken; required together with start when fetching the next page."
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 50,
+						"description": "Maximum items to return (1-50, default 10). Results beyond the provider's page are not fetched.",
+						"default": 10
+					}
+				},
+				"required": ["usernameOrUrl"]
+			},
+			"annotations": {
+				"title": "Get a person's posts",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_profile_recent_activity_time",
+			"title": "Get a person's last activity",
+			"description": "Return when a LinkedIn member was last active (timestamp, relative age such as '1d', and activity type).",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"usernameOrUrl": {
+						"type": "string",
+						"minLength": 1,
+						"description": "A LinkedIn member username such as 'janedoe' or a profile URL such as 'https://www.linkedin.com/in/janedoe'."
+					}
+				},
+				"required": ["usernameOrUrl"]
+			},
+			"annotations": {
+				"title": "Get a person's last activity",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_similar_profiles",
+			"title": "Find similar employee profiles",
+			"description": "Find LinkedIn profiles similar to a given member (LinkedIn's own 'similar profiles'): fullName, headline, location, username, profile URL.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"usernameOrUrl": {
+						"type": "string",
+						"minLength": 1,
+						"description": "A LinkedIn member username such as 'janedoe' or a profile URL such as 'https://www.linkedin.com/in/janedoe'."
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 50,
+						"description": "Maximum items to return (1-50, default 10). Results beyond the provider's page are not fetched.",
+						"default": 10
+					}
+				},
+				"required": ["usernameOrUrl"]
+			},
+			"annotations": {
+				"title": "Find similar employee profiles",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_profile_about",
+			"title": "Get a person's About section",
+			"description": "Return a LinkedIn member's 'About this profile' facts: joined date, verification status and details, last contact-info and photo updates.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"usernameOrUrl": {
+						"type": "string",
+						"minLength": 1,
+						"description": "A LinkedIn member username such as 'janedoe' or a profile URL such as 'https://www.linkedin.com/in/janedoe'."
+					}
+				},
+				"required": ["usernameOrUrl"]
+			},
+			"annotations": {
+				"title": "Get a person's About section",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_search_jobs",
+			"title": "Search jobs (filters)",
+			"description": "Search live LinkedIn job postings by keywords with optional geo id, company ids, date-posted, job type, experience level, onsite/remote, salary and sort filters. Returns job id, title, url, company, location, posted date; pages of 25 via start.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"keywords": {
+						"type": "string",
+						"minLength": 1,
+						"description": "Job title or keywords, e.g. 'senior data engineer'."
+					},
+					"locationId": {
+						"type": "string",
+						"description": "LinkedIn geo id."
+					},
+					"companyIds": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"description": "Numeric LinkedIn company ids."
+					},
+					"titleIds": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"description": "LinkedIn title ids (only if known)."
+					},
+					"functionIds": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"description": "LinkedIn job-function ids (only if known)."
+					},
+					"industryIds": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"description": "LinkedIn industry ids (only if known)."
+					},
+					"datePosted": {
+						"enum": ["anyTime", "pastMonth", "pastWeek", "past24Hours"],
+						"type": "string"
+					},
+					"jobType": {
+						"enum": ["fullTime", "partTime", "contract", "internship"],
+						"type": "string"
+					},
+					"experienceLevel": {
+						"enum": [
+							"internship",
+							"entryLevel",
+							"associate",
+							"midSeniorLevel",
+							"director",
+							"executive"
+						],
+						"type": "string"
+					},
+					"onsiteRemote": {
+						"enum": ["onSite", "remote", "hybrid"],
+						"type": "string"
+					},
+					"salary": {
+						"enum": ["40k+", "60k+", "80k+", "100k+", "120k+", "140k+", "160k+", "180k+", "200k+"],
+						"type": "string",
+						"description": "Minimum yearly salary bucket."
+					},
+					"sort": {
+						"enum": ["mostRelevant", "mostRecent"],
+						"type": "string"
+					},
+					"start": {
+						"type": "string",
+						"description": "Offset in steps of 25 (0, 25, 50 … max 975)."
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 50,
+						"description": "Maximum items to return (1-50, default 10). Results beyond the provider's page are not fetched.",
+						"default": 10
+					}
+				},
+				"required": ["keywords"]
+			},
+			"annotations": {
+				"title": "Search jobs (filters)",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_search_jobs_v2",
+			"title": "Search jobs",
+			"description": "Search live LinkedIn job postings by keywords with an optional geo id, a distance radius (0, 5, 10, 25, 50 or 100 miles), company ids, date-posted, job type, experience level, onsite/remote, salary and sort filters. Returns job id, title, url, company, location, posted date and benefits when listed.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"keywords": {
+						"type": "string",
+						"minLength": 1,
+						"description": "Job title or keywords, e.g. 'senior data engineer'."
+					},
+					"locationId": {
+						"type": "string",
+						"description": "LinkedIn geo id."
+					},
+					"companyIds": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"description": "Numeric LinkedIn company ids."
+					},
+					"titleIds": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"description": "LinkedIn title ids (only if known)."
+					},
+					"functionIds": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"description": "LinkedIn job-function ids (only if known)."
+					},
+					"industryIds": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"description": "LinkedIn industry ids (only if known)."
+					},
+					"datePosted": {
+						"enum": ["anyTime", "pastMonth", "pastWeek", "past24Hours"],
+						"type": "string"
+					},
+					"jobType": {
+						"enum": ["fullTime", "partTime", "contract", "internship"],
+						"type": "string"
+					},
+					"experienceLevel": {
+						"enum": [
+							"internship",
+							"entryLevel",
+							"associate",
+							"midSeniorLevel",
+							"director",
+							"executive"
+						],
+						"type": "string"
+					},
+					"onsiteRemote": {
+						"enum": ["onSite", "remote", "hybrid"],
+						"type": "string"
+					},
+					"salary": {
+						"enum": ["40k+", "60k+", "80k+", "100k+", "120k+", "140k+", "160k+", "180k+", "200k+"],
+						"type": "string",
+						"description": "Minimum yearly salary bucket."
+					},
+					"sort": {
+						"enum": ["mostRelevant", "mostRecent"],
+						"type": "string"
+					},
+					"distance": {
+						"enum": ["0", "5", "10", "25", "50", "100"],
+						"type": "string",
+						"description": "Radius in miles around locationId."
+					},
+					"start": {
+						"type": "string",
+						"description": "Offset in steps of 25 (0, 25, 50 … max 975)."
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 50,
+						"description": "Maximum items to return (1-50, default 10). Results beyond the provider's page are not fetched.",
+						"default": 10
+					}
+				},
+				"required": ["keywords"]
+			},
+			"annotations": {
+				"title": "Search jobs",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_job_details",
+			"title": "Get job posting",
+			"description": "Fetch a LinkedIn job posting by id or jobs/view URL: title, state, description, location, employment type, job functions, industries, language, listed/expiry dates, apply URLs and the hiring company's summary.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"jobId": {
+						"type": "string",
+						"minLength": 1,
+						"description": "LinkedIn job id (e.g. '4423135589') or a linkedin.com/jobs/view/<id> URL."
+					}
+				},
+				"required": ["jobId"]
+			},
+			"annotations": {
+				"title": "Get job posting",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_job_hiring_team",
+			"title": "Get a job's hiring team",
+			"description": "List the hiring-team members LinkedIn shows on a job posting (fullName, headline, username, profile URL) by job id or job URL.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"jobId": {
+						"type": "string",
+						"description": "LinkedIn job id."
+					},
+					"jobUrl": {
+						"type": "string",
+						"description": "linkedin.com/jobs/view/<id> URL."
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 50,
+						"description": "Maximum items to return (1-50, default 10). Results beyond the provider's page are not fetched.",
+						"default": 10
+					}
+				},
+				"required": []
+			},
+			"annotations": {
+				"title": "Get a job's hiring team",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_search_posts",
+			"title": "Search posts",
+			"description": "Search LinkedIn posts by keyword with optional filters: sort (relevance or date_posted), date window (e.g. 'past-24h', 'past-week', 'past-month'), author title, author company ids, author industry ids, from-member usernames, from-company ids, mentions. Returns post text, author, engagement counts, urn/url; paged.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"keyword": {
+						"type": "string",
+						"minLength": 1,
+						"description": "Search keyword or phrase, e.g. 'we are hiring data engineers'."
+					},
+					"sortBy": {
+						"enum": ["date_posted", "relevance"],
+						"type": "string",
+						"description": "relevance (default) or date_posted."
+					},
+					"datePosted": {
+						"type": "string",
+						"description": "Date window such as 'past-24h', 'past-week' or 'past-month'."
+					},
+					"authorTitle": {
+						"type": "string",
+						"description": "Keyword in the author's title, e.g. 'talent acquisition'."
+					},
+					"authorCompanyIds": {
+						"type": "array",
+						"items": {
+							"type": "integer"
+						},
+						"description": "Numeric company ids of the author's employer."
+					},
+					"authorIndustryIds": {
+						"type": "array",
+						"items": {
+							"type": "integer"
+						}
+					},
+					"fromMemberUsernames": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"description": "Only posts by these member usernames."
+					},
+					"fromCompanyIds": {
+						"type": "array",
+						"items": {
+							"type": "integer"
+						},
+						"description": "Only posts by these company pages."
+					},
+					"mentionsMemberUsernames": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					},
+					"mentionsOrganizationIds": {
+						"type": "array",
+						"items": {
+							"type": "integer"
+						}
+					},
+					"contentType": {
+						"type": "string",
+						"description": "Optional content type filter (e.g. 'videos', 'images', 'jobs')."
+					},
+					"page": {
+						"type": "integer",
+						"minimum": 1,
+						"description": "1-based results page.",
+						"default": 1
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 50,
+						"description": "Maximum items to return (1-50, default 10). Results beyond the provider's page are not fetched.",
+						"default": 10
+					}
+				},
+				"required": ["keyword"]
+			},
+			"annotations": {
+				"title": "Search posts",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_search_posts_by_hashtag",
+			"title": "Search posts by hashtag (basic)",
+			"description": "Search LinkedIn posts by hashtag (legacy v1): post text, author, engagement counts, urn/url. Sort RELEVANT, REV_CHRON or CHRON; paged via start and paginationToken.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"hashtag": {
+						"type": "string",
+						"minLength": 1,
+						"description": "Hashtag with or without '#', e.g. 'opentowork'."
+					},
+					"sortBy": {
+						"enum": ["REV_CHRON", "CHRON", "RELEVANT"],
+						"type": "string"
+					},
+					"start": {
+						"type": "string",
+						"description": "Provider offset for the next page (echoed back as nextStart by the previous call). Omit for the first page."
+					},
+					"paginationToken": {
+						"type": "string",
+						"description": "Opaque token from the previous call's paginationToken; required together with start when fetching the next page."
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 50,
+						"description": "Maximum items to return (1-50, default 10). Results beyond the provider's page are not fetched.",
+						"default": 10
+					}
+				},
+				"required": ["hashtag"]
+			},
+			"annotations": {
+				"title": "Search posts by hashtag (basic)",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_search_posts_by_hashtag_v2",
+			"title": "Search posts by hashtag",
+			"description": "Search LinkedIn posts by hashtag (v2, preferred): post text, author, engagement counts, urn/url. Sort RELEVANCE or DATE_POSTED; paged via start and paginationToken.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"hashtag": {
+						"type": "string",
+						"minLength": 1,
+						"description": "Hashtag with or without '#', e.g. 'opentowork'."
+					},
+					"sortBy": {
+						"enum": ["RELEVANCE", "DATE_POSTED"],
+						"type": "string"
+					},
+					"start": {
+						"type": "string",
+						"description": "Provider offset for the next page (echoed back as nextStart by the previous call). Omit for the first page."
+					},
+					"paginationToken": {
+						"type": "string",
+						"description": "Opaque token from the previous call's paginationToken; required together with start when fetching the next page."
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 50,
+						"description": "Maximum items to return (1-50, default 10). Results beyond the provider's page are not fetched.",
+						"default": 10
+					}
+				},
+				"required": ["hashtag"]
+			},
+			"annotations": {
+				"title": "Search posts by hashtag",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_get_post",
+			"title": "Get post",
+			"description": "Fetch a single LinkedIn post by URL: text, author, posted date, reaction/comment/repost counts, urn, shareUrn, attached job or article, mentioned members and companies.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"postUrl": {
+						"type": "string",
+						"format": "uri",
+						"description": "Post URL (linkedin.com/posts/… or linkedin.com/feed/update/urn:li:activity:…)."
+					}
+				},
+				"required": ["postUrl"]
+			},
+			"annotations": {
+				"title": "Get post",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_get_social_post",
+			"title": "Get post by URL",
+			"description": "Fetch a single LinkedIn post by URL via the provider's alternate 'social post' route: text, author, posted date, engagement counts and urn. Use it when the standard post lookup fails.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"postUrl": {
+						"type": "string",
+						"format": "uri",
+						"description": "Post URL."
+					}
+				},
+				"required": ["postUrl"]
+			},
+			"annotations": {
+				"title": "Get post by URL",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_post_comments",
+			"title": "Get post comments",
+			"description": "List comments on a LinkedIn post by post urn: text, author (fullName, headline, username, url), created date, reaction and reply counts. Sort mostRelevant or mostRecent; paged via page and paginationToken.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"postUrn": {
+						"type": "string",
+						"minLength": 1,
+						"description": "Post urn / activity id."
+					},
+					"sort": {
+						"enum": ["mostRelevant", "mostRecent"],
+						"type": "string",
+						"description": "Ordering; defaults to mostRelevant."
+					},
+					"page": {
+						"type": "integer",
+						"minimum": 1,
+						"description": "1-based results page.",
+						"default": 1
+					},
+					"paginationToken": {
+						"type": "string",
+						"description": "Opaque token from the previous call's paginationToken; required together with start when fetching the next page."
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 50,
+						"description": "Maximum items to return (1-50, default 10). Results beyond the provider's page are not fetched.",
+						"default": 10
+					}
+				},
+				"required": ["postUrn"]
+			},
+			"annotations": {
+				"title": "Get post comments",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_post_comments_by_share_url",
+			"title": "Get post comments by URL",
+			"description": "List comments on a LinkedIn post identified by its share URL: text, author, created date, reaction counts. Sort mostRelevant or mostRecent; paged.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"shareUrl": {
+						"type": "string",
+						"format": "uri",
+						"description": "The post's share URL (linkedin.com/posts/…)."
+					},
+					"sort": {
+						"enum": ["mostRelevant", "mostRecent"],
+						"type": "string",
+						"description": "Ordering; defaults to mostRelevant."
+					},
+					"page": {
+						"type": "integer",
+						"minimum": 1,
+						"description": "1-based results page.",
+						"default": 1
+					},
+					"paginationToken": {
+						"type": "string",
+						"description": "Opaque token from the previous call's paginationToken; required together with start when fetching the next page."
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 50,
+						"description": "Maximum items to return (1-50, default 10). Results beyond the provider's page are not fetched.",
+						"default": 10
+					}
+				},
+				"required": ["shareUrl"]
+			},
+			"annotations": {
+				"title": "Get post comments by URL",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_post_reactions",
+			"title": "Get post reactions",
+			"description": "List the members who reacted to a LinkedIn post by URL: fullName, headline, profile URL, reaction type. Optional reactionType filter; paged via page with total/totalPages.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"postUrl": {
+						"type": "string",
+						"format": "uri",
+						"description": "Post URL."
+					},
+					"reactionType": {
+						"type": "string",
+						"description": "Optional filter such as LIKE, PRAISE, EMPATHY, INTEREST, APPRECIATION."
+					},
+					"page": {
+						"type": "integer",
+						"minimum": 1,
+						"description": "1-based results page.",
+						"default": 1
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 50,
+						"description": "Maximum items to return (1-50, default 10). Results beyond the provider's page are not fetched.",
+						"default": 10
+					}
+				},
+				"required": ["postUrl"]
+			},
+			"annotations": {
+				"title": "Get post reactions",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_post_reposts",
+			"title": "Get post reposts",
+			"description": "List the members who reposted a LinkedIn post by post urn (activity id, urn:li:activity:… or post URL): person summary and repost date; paged via page and paginationToken.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"postUrn": {
+						"type": "string",
+						"minLength": 1,
+						"description": "Post urn / activity id (or a post URL containing it)."
+					},
+					"page": {
+						"type": "integer",
+						"minimum": 1,
+						"description": "1-based results page.",
+						"default": 1
+					},
+					"paginationToken": {
+						"type": "string",
+						"description": "Opaque token from the previous call's paginationToken; required together with start when fetching the next page."
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 50,
+						"description": "Maximum items to return (1-50, default 10). Results beyond the provider's page are not fetched.",
+						"default": 10
+					}
+				},
+				"required": ["postUrn"]
+			},
+			"annotations": {
+				"title": "Get post reposts",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_profile_comments",
+			"title": "Get a person's comments",
+			"description": "List a LinkedIn member's recent comment activity: their comment text, when they commented, and the post it was on (text, url, author, engagement).",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"usernameOrUrl": {
+						"type": "string",
+						"minLength": 1,
+						"description": "A LinkedIn member username such as 'janedoe' or a profile URL such as 'https://www.linkedin.com/in/janedoe'."
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 50,
+						"description": "Maximum items to return (1-50, default 10). Results beyond the provider's page are not fetched.",
+						"default": 10
+					}
+				},
+				"required": ["usernameOrUrl"]
+			},
+			"annotations": {
+				"title": "Get a person's comments",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_profile_reactions",
+			"title": "Get a person's reactions",
+			"description": "List the LinkedIn posts a member reacted to: reaction action, entity type and the post (text, url, author, engagement). Paged via start (0, 100, 200…) and paginationToken.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"usernameOrUrl": {
+						"type": "string",
+						"minLength": 1,
+						"description": "A LinkedIn member username such as 'janedoe' or a profile URL such as 'https://www.linkedin.com/in/janedoe'."
+					},
+					"start": {
+						"type": "string",
+						"description": "Provider offset for the next page (echoed back as nextStart by the previous call). Omit for the first page."
+					},
+					"paginationToken": {
+						"type": "string",
+						"description": "Opaque token from the previous call's paginationToken; required together with start when fetching the next page."
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 50,
+						"description": "Maximum items to return (1-50, default 10). Results beyond the provider's page are not fetched.",
+						"default": 10
+					}
+				},
+				"required": ["usernameOrUrl"]
+			},
+			"annotations": {
+				"title": "Get a person's reactions",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_group_posts",
+			"title": "Get group posts",
+			"description": "List posts in a LinkedIn group by numeric group id: text, author (fullName, headline, username), posted date, engagement counts, url. Paged via page.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"groupId": {
+						"type": "integer",
+						"exclusiveMinimum": 0,
+						"description": "Numeric group id from linkedin.com/groups/<id>."
+					},
+					"page": {
+						"type": "integer",
+						"minimum": 1,
+						"description": "1-based results page.",
+						"default": 1
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 50,
+						"description": "Maximum items to return (1-50, default 10). Results beyond the provider's page are not fetched.",
+						"default": 10
+					}
+				},
+				"required": ["groupId"]
+			},
+			"annotations": {
+				"title": "Get group posts",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_profile_company_interests",
+			"title": "Get companies a person follows",
+			"description": "List the companies a member follows (id, name, url, follower count). Paged via page (50 per page).",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"usernameOrUrl": {
+						"type": "string",
+						"minLength": 1,
+						"description": "A LinkedIn member username such as 'janedoe' or a profile URL such as 'https://www.linkedin.com/in/janedoe'."
+					},
+					"page": {
+						"type": "integer",
+						"minimum": 1,
+						"description": "1-based results page.",
+						"default": 1
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 50,
+						"description": "Maximum items to return (1-50, default 10). Results beyond the provider's page are not fetched.",
+						"default": 10
+					}
+				},
+				"required": ["usernameOrUrl"]
+			},
+			"annotations": {
+				"title": "Get companies a person follows",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_profile_group_interests",
+			"title": "Get groups a person follows",
+			"description": "List the LinkedIn groups a member belongs to (id, name, url, follower count). Paged via page (50 per page).",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"usernameOrUrl": {
+						"type": "string",
+						"minLength": 1,
+						"description": "A LinkedIn member username such as 'janedoe' or a profile URL such as 'https://www.linkedin.com/in/janedoe'."
+					},
+					"page": {
+						"type": "integer",
+						"minimum": 1,
+						"description": "1-based results page.",
+						"default": 1
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 50,
+						"description": "Maximum items to return (1-50, default 10). Results beyond the provider's page are not fetched.",
+						"default": 10
+					}
+				},
+				"required": ["usernameOrUrl"]
+			},
+			"annotations": {
+				"title": "Get groups a person follows",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_profile_school_interests",
+			"title": "Get schools a person follows",
+			"description": "List the schools a member follows (id, name, url, follower count). Paged via page (50 per page).",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"usernameOrUrl": {
+						"type": "string",
+						"minLength": 1,
+						"description": "A LinkedIn member username such as 'janedoe' or a profile URL such as 'https://www.linkedin.com/in/janedoe'."
+					},
+					"page": {
+						"type": "integer",
+						"minimum": 1,
+						"description": "1-based results page.",
+						"default": 1
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 50,
+						"description": "Maximum items to return (1-50, default 10). Results beyond the provider's page are not fetched.",
+						"default": 10
+					}
+				},
+				"required": ["usernameOrUrl"]
+			},
+			"annotations": {
+				"title": "Get schools a person follows",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_profile_newsletter_interests",
+			"title": "Get newsletters a person follows",
+			"description": "List the LinkedIn newsletters a member subscribes to (id, name, url, description, frequency, publisher). Paged via page (50 per page).",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"usernameOrUrl": {
+						"type": "string",
+						"minLength": 1,
+						"description": "A LinkedIn member username such as 'janedoe' or a profile URL such as 'https://www.linkedin.com/in/janedoe'."
+					},
+					"page": {
+						"type": "integer",
+						"minimum": 1,
+						"description": "1-based results page.",
+						"default": 1
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 50,
+						"description": "Maximum items to return (1-50, default 10). Results beyond the provider's page are not fetched.",
+						"default": 10
+					}
+				},
+				"required": ["usernameOrUrl"]
+			},
+			"annotations": {
+				"title": "Get newsletters a person follows",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_profile_top_voice_interests",
+			"title": "Get Top Voices a person follows",
+			"description": "List the LinkedIn Top Voices a member follows: fullName, headline, username, profile URL.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"usernameOrUrl": {
+						"type": "string",
+						"minLength": 1,
+						"description": "A LinkedIn member username such as 'janedoe' or a profile URL such as 'https://www.linkedin.com/in/janedoe'."
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 50,
+						"description": "Maximum items to return (1-50, default 10). Results beyond the provider's page are not fetched.",
+						"default": 10
+					}
+				},
+				"required": ["usernameOrUrl"]
+			},
+			"annotations": {
+				"title": "Get Top Voices a person follows",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_profile_full_with_posts",
+			"title": "Get employee profile with posts",
+			"description": "Fetch a full LinkedIn profile, connection/follower counts and the member's recent posts in one call (2 credits).",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"usernameOrUrl": {
+						"type": "string",
+						"minLength": 1,
+						"description": "A LinkedIn member username such as 'janedoe' or a profile URL such as 'https://www.linkedin.com/in/janedoe'."
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 50,
+						"description": "Maximum items to return (1-50, default 10). Results beyond the provider's page are not fetched.",
+						"default": 10
+					}
+				},
+				"required": ["usernameOrUrl"]
+			},
+			"annotations": {
+				"title": "Get employee profile with posts",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "employee_profile_with_recommendations",
+			"title": "Get employee profile with recommendations",
+			"description": "Fetch a full LinkedIn profile together with received and given recommendations in one call (2 credits).",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"usernameOrUrl": {
+						"type": "string",
+						"minLength": 1,
+						"description": "A LinkedIn member username such as 'janedoe' or a profile URL such as 'https://www.linkedin.com/in/janedoe'."
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 50,
+						"description": "Maximum items to return (1-50, default 10). Results beyond the provider's page are not fetched.",
+						"default": 10
+					}
+				},
+				"required": ["usernameOrUrl"]
+			},
+			"annotations": {
+				"title": "Get employee profile with recommendations",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": true
+			}
+		},
+		{
+			"name": "list_artifacts",
+			"title": "List my sheets and documents",
+			"description": "List the user's own recent SourceGeek sheets and documents in this workspace (created in SourceGeek or through this connector), newest first. Returns id, kind, title, last update and URL for each.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"kind": {
+						"enum": ["sheet", "text"],
+						"type": "string",
+						"description": "Only sheets (candidate lists, trackers) or only text documents (shortlists, dossiers)."
+					},
+					"limit": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 50,
+						"description": "How many to return (1-50, default 20).",
+						"default": 20
+					}
+				},
+				"required": []
+			},
+			"annotations": {
+				"title": "List my sheets and documents",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": false
+			}
+		},
+		{
+			"name": "list_projects",
+			"title": "List my projects",
+			"description": "List the SourceGeek projects the user can see in this workspace, most recently active first. Each project is a piece of hiring work (a role, a market map) planned as tasks that SourceGeek works on. Returns id, key, name, the start of its brief, how many tasks are in each status, and its URL.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {},
+				"required": []
+			},
+			"annotations": {
+				"title": "List my projects",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": false
+			}
+		},
+		{
+			"name": "list_tasks",
+			"title": "List a project's tasks",
+			"description": "List one SourceGeek project's tasks (removed ones left out), in board order, with the project's brief. Each task has its key (e.g. SBE-12), title, status (To do, Waiting, In progress, Working, Needs input, Needs approval, Ready for review, Failed or Done), priority, assignee, progress through its steps while it runs, the tasks it waits on, its repeat schedule if it recurs, and its URL.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"project": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 100,
+						"description": "The project's id (prj_…) or key (e.g. SBE)."
+					}
+				},
+				"required": ["project"]
+			},
+			"annotations": {
+				"title": "List a project's tasks",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": false
+			}
+		},
+		{
+			"name": "read_task",
+			"title": "Read a task and its result",
+			"description": "Read one SourceGeek task by key (e.g. SBE-12): its title, status, description, the result SourceGeek posted when it finished, the latest comments, the sheets and documents its chat made (id, kind, title, URL), and links to the task and its chat in SourceGeek.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"task": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 40,
+						"description": "The task's key, e.g. SBE-12."
+					}
+				},
+				"required": ["task"]
+			},
+			"annotations": {
+				"title": "Read a task and its result",
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"openWorldHint": false
+			}
+		},
+		{
+			"name": "plan_tasks",
+			"title": "Plan tasks in a project",
+			"description": "Add tasks to a SourceGeek project's board, in To Do, in the order given, to an existing project or to a new one this call creates. Nothing runs and nothing is charged: a task starts only when it is started. Each task is one piece of work a SourceGeek chat finishes on its own (a market map, sourcing for one market, a shortlist, outreach drafts) and sees only its own description and the project's brief, so write each description self-contained: the goal, the context it needs and the expected output. A task can wait on earlier ones: started together, it starts by itself once they are ready for review, with their results. Returns the project and each task's key and URL.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"project": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 100,
+						"description": "An existing project's id (prj_…) or key (e.g. SBE). Leave out to create newProject."
+					},
+					"newProject": {
+						"type": "object",
+						"properties": {
+							"name": {
+								"type": "string",
+								"minLength": 1,
+								"maxLength": 200,
+								"description": "Usually the role, e.g. React developer, Amsterdam."
+							},
+							"brief": {
+								"type": "string",
+								"maxLength": 8000,
+								"description": "Markdown every task of the project reads: the role, must-haves, markets, constraints."
+							}
+						},
+						"required": ["name"],
+						"description": "Create a project, shared with the workspace, and plan into it. Only when the user wants a new project."
+					},
+					"tasks": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"title": {
+									"type": "string",
+									"minLength": 1,
+									"maxLength": 300
+								},
+								"description": {
+									"type": "string",
+									"maxLength": 20000,
+									"description": "Markdown: the goal, the context the task needs and the expected output (a sheet, a shortlist, a document). With a template: only what this task needs beyond it."
+								},
+								"template": {
+									"enum": [
+										"source_candidates",
+										"market_map",
+										"outreach_draft",
+										"job_description",
+										"role_intake",
+										"rediscover_talent",
+										"screen_applicants",
+										"shortlist_report",
+										"talent_signals",
+										"candidate_pitch",
+										"salary_benchmark",
+										"interview_kit",
+										"reference_checks",
+										"offer_plan"
+									],
+									"type": "string",
+									"description": "A standard recruiting task to start from; it supplies the steps and the expected output: source_candidates (about 30 people who fit the brief, scored, the best 10 shortlisted); market_map (where these people work, how many there are, what they earn); outreach_draft (a first message and a follow-up, ready to send); job_description (a clear, inclusive job ad written from the brief); role_intake (clear hiring criteria and a scoring rubric from the brief); rediscover_talent (people you already know who fit, before sourcing anyone new); screen_applicants (inbound applicants sorted into advance, discuss and decline); shortlist_report (hiring-manager-ready write-ups of the best candidates); talent_signals (layoffs, funding and leadership changes that open sourcing windows); candidate_pitch (why someone should join, backed by sources, for outreach and calls); salary_benchmark (pay ranges per level and market, with their sources); interview_kit (interview plan, questions and scorecards from the brief); reference_checks (targeted reference questions and outreach to referees); offer_plan (an offer package framed against the market, and how to close)."
+								},
+								"after": {
+									"type": "array",
+									"items": {
+										"anyOf": [
+											{
+												"type": "integer",
+												"minimum": 1
+											},
+											{
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 20
+											}
+										]
+									},
+									"maxItems": 10,
+									"description": "The tasks this one needs done first: an earlier task of this call by its position (1 is the first), or an existing task's key (SBE-3)."
+								}
+							},
+							"required": ["title"]
+						},
+						"minItems": 1,
+						"maxItems": 10
+					}
+				},
+				"required": ["tasks"]
+			},
+			"annotations": {
+				"title": "Plan tasks in a project",
+				"readOnlyHint": false,
+				"destructiveHint": false,
+				"openWorldHint": false
+			}
+		},
+		{
+			"name": "start_tasks",
+			"title": "Start SourceGeek on tasks",
+			"description": "Start SourceGeek on tasks of one project: each runs in a SourceGeek chat of its own, as the user, and costs one chat run of the workspace's credits. A task that waits on others not yet ready for review is queued instead and starts by itself, with their results, once they are; on a task that already ran, the instruction goes to its chat as a follow-up. Tasks report back in SourceGeek (the project's chat, the inbox and email) when they are ready for review or fail. Returns what started, what waits and what couldn't start.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"tasks": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"task": {
+									"type": "string",
+									"minLength": 1,
+									"maxLength": 20,
+									"description": "The task's key, e.g. SBE-12."
+								},
+								"instruction": {
+									"type": "string",
+									"maxLength": 8000,
+									"description": "Optional: what to do beyond the task's description, or the follow-up for a task that already ran."
+								}
+							},
+							"required": ["task"]
+						},
+						"minItems": 1,
+						"maxItems": 10,
+						"description": "Every task to start, all of one project."
+					}
+				},
+				"required": ["tasks"]
+			},
+			"annotations": {
+				"title": "Start SourceGeek on tasks",
+				"readOnlyHint": false,
+				"destructiveHint": true,
+				"openWorldHint": false
+			}
+		}
+	]
+}
