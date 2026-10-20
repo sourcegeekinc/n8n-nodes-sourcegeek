@@ -1,82 +1,27 @@
 import type {
 	IDataObject,
 	IExecuteFunctions,
+	IHttpRequestOptions,
 	INodeExecutionData,
 	INodeType,
 	INodeTypeDescription,
 } from 'n8n-workflow';
-import { NodeOperationError, sleep } from 'n8n-workflow';
-import {
-	BASE_URL,
-	OPERATION,
-	POLLING_INTERVAL_MS,
-	RESOURCE,
-	aiPeopleSearchFields,
-	checkConnectionStatusFields,
-	getCompanyDataFields,
-	getCompanyJobsFields,
-	getCompanyPostsFields,
-	getConversationMessagesFields,
-	getProfileDataFields,
-	getProfilePostsFields,
-	getRecentAcceptedConnectionRequestsFields,
-	getRecentMessagesFields,
-	getRecentRecruiterMessagesFields,
-	getToolRunFields,
-	importCompanyFollowersFields,
-	importContactsBasicSearchFields,
-	importContactsRecruiterSearchFields,
-	importContactsSalesNavSearchFields,
-	importGroupMembersFields,
-	importPostCommentsFields,
-	importPostLikesFields,
-	importProfileViewersFields,
-	sendConnectionRequestFields,
-	sendMessageFields,
-	sendRecruiterInMailMessageFields,
-	sendSalesNavInMailMessageFields,
-} from './actions';
+import { NodeApiError, NodeOperationError } from 'n8n-workflow';
 
-async function pollToolRun(
-	ctx: IExecuteFunctions,
-	toolRunId: string,
-	headers: Record<string, string>,
-): Promise<IDataObject> {
-	for (;;) {
-		const result = (await ctx.helpers.httpRequestWithAuthentication.call(
-			ctx,
-			'sourcegeekCredentialsApi',
-			{
-				method: 'POST',
-				url: `${BASE_URL}/get-tool-run`,
-				headers,
-				json: true,
-				body: { toolRunId },
-			},
-		)) as IDataObject;
-
-		if (
-			result.status === 'COMPLETED' ||
-			result.status === 'FAILED' ||
-			result.status === 'CANCELLED'
-		) {
-			return result;
-		}
-
-		await sleep(POLLING_INTERVAL_MS);
-	}
-}
+import { DEFAULT_BASE_URL } from '../../credentials/SourcegeekCredentialsApi.credentials';
+import { FIELDS, OPERATIONS, RESOURCE, toInput, toolByName } from './catalog';
 
 export class Sourcegeek implements INodeType {
 	description: INodeTypeDescription = {
-		displayName: 'SourceGeek for LinkedIn',
+		displayName: 'SourceGeek',
 		name: 'sourcegeek',
 		icon: 'file:sourcegeek.svg',
 		group: ['transform'],
-		version: 1,
-		description: 'Automate LinkedIn tasks and AI workflows with SourceGeek.',
+		version: 2,
+		subtitle: '={{$parameter["operation"]}}',
+		description: 'Search candidates, companies and jobs, and work with your SourceGeek workspace',
 		defaults: {
-			name: 'SourceGeek for LinkedIn',
+			name: 'SourceGeek',
 		},
 		inputs: ['main'],
 		outputs: ['main'],
@@ -87,637 +32,87 @@ export class Sourcegeek implements INodeType {
 				required: true,
 			},
 		],
-		properties: [
-			RESOURCE,
-			OPERATION,
-			...aiPeopleSearchFields,
-			...checkConnectionStatusFields,
-			...getCompanyDataFields,
-			...getCompanyJobsFields,
-			...getCompanyPostsFields,
-			...getConversationMessagesFields,
-			...getProfileDataFields,
-			...getProfilePostsFields,
-			...getRecentAcceptedConnectionRequestsFields,
-			...getRecentMessagesFields,
-			...getRecentRecruiterMessagesFields,
-			...getToolRunFields,
-			...importCompanyFollowersFields,
-			...importContactsBasicSearchFields,
-			...importContactsRecruiterSearchFields,
-			...importContactsSalesNavSearchFields,
-			...importGroupMembersFields,
-			...importPostCommentsFields,
-			...importPostLikesFields,
-			...importProfileViewersFields,
-			...sendConnectionRequestFields,
-			...sendMessageFields,
-			...sendRecruiterInMailMessageFields,
-			...sendSalesNavInMailMessageFields,
-		],
+		properties: [RESOURCE, ...OPERATIONS, ...FIELDS],
 	};
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 		const items = this.getInputData();
 		const outItems: INodeExecutionData[] = [];
 
-		const credentials = (await this.getCredentials('sourcegeekCredentialsApi')) as {
-			apiKey: string;
-		};
-		const authHeaders = { Authorization: `Bearer ${credentials.apiKey}` };
-		const commonHeaders = {
-			Accept: 'application/json',
-			'Content-Type': 'application/json',
-			...authHeaders,
-		};
+		const credentials = await this.getCredentials('sourcegeekCredentialsApi');
+		const baseUrl = String(credentials.baseUrl || DEFAULT_BASE_URL).replace(/\/+$/, '');
 
 		for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
-			const resource = this.getNodeParameter('resource', itemIndex) as string;
-			const operation = this.getNodeParameter('operation', itemIndex) as string;
-
 			try {
-				if (resource !== 'linkedin') {
-					outItems.push({
-						json: { success: true } as IDataObject,
-						pairedItem: { item: itemIndex },
-					});
-					continue;
-				}
-
-				switch (operation) {
-					case 'aiPeopleSearch': {
-						const query = this.getNodeParameter('query', itemIndex) as string;
-						const maxResults = this.getNodeParameter('maxResults', itemIndex, 20) as number;
-						const res = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'sourcegeekCredentialsApi',
-							{
-								method: 'POST',
-								url: `${BASE_URL}/ai-people-search`,
-								headers: commonHeaders,
-								json: true,
-								body: { query, maxResults },
-							},
-						);
-						const result = await pollToolRun(
-							this,
-							(res as IDataObject).toolRunId as string,
-							commonHeaders,
-						);
-						outItems.push({ json: result, pairedItem: { item: itemIndex } });
-						break;
-					}
-					case 'checkConnectionStatus': {
-						const linkedinUrl = this.getNodeParameter('linkedinUrl', itemIndex) as string;
-						const res = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'sourcegeekCredentialsApi',
-							{
-								method: 'POST',
-								url: `${BASE_URL}/check-connection-status`,
-								headers: commonHeaders,
-								json: true,
-								body: { linkedinUrl },
-							},
-						);
-						const result = await pollToolRun(
-							this,
-							(res as IDataObject).toolRunId as string,
-							commonHeaders,
-						);
-						outItems.push({ json: result, pairedItem: { item: itemIndex } });
-						break;
-					}
-					case 'getCompanyData': {
-						const linkedinUrl = this.getNodeParameter('linkedinUrl', itemIndex) as string;
-						const res = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'sourcegeekCredentialsApi',
-							{
-								method: 'POST',
-								url: `${BASE_URL}/get-company-data`,
-								headers: commonHeaders,
-								json: true,
-								body: { linkedinUrl },
-							},
-						);
-						const result = await pollToolRun(
-							this,
-							(res as IDataObject).toolRunId as string,
-							commonHeaders,
-						);
-						outItems.push({ json: result, pairedItem: { item: itemIndex } });
-						break;
-					}
-					case 'getProfileData': {
-						const linkedinUrl = this.getNodeParameter('linkedinUrl', itemIndex) as string;
-						const res = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'sourcegeekCredentialsApi',
-							{
-								method: 'POST',
-								url: `${BASE_URL}/get-profile-data`,
-								headers: commonHeaders,
-								json: true,
-								body: { linkedinUrl },
-							},
-						);
-						const result = await pollToolRun(
-							this,
-							(res as IDataObject).toolRunId as string,
-							commonHeaders,
-						);
-						outItems.push({ json: result, pairedItem: { item: itemIndex } });
-						break;
-					}
-					case 'getRecentAcceptedConnectionRequests': {
-						const res = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'sourcegeekCredentialsApi',
-							{
-								method: 'POST',
-								url: `${BASE_URL}/get-recent-accepted-connection-requests`,
-								headers: commonHeaders,
-								json: true,
-								body: {},
-							},
-						);
-						const result = await pollToolRun(
-							this,
-							(res as IDataObject).toolRunId as string,
-							commonHeaders,
-						);
-						outItems.push({ json: result, pairedItem: { item: itemIndex } });
-						break;
-					}
-					case 'getRecentMessages': {
-						const res = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'sourcegeekCredentialsApi',
-							{
-								method: 'POST',
-								url: `${BASE_URL}/get-recent-messages`,
-								headers: commonHeaders,
-								json: true,
-								body: {},
-							},
-						);
-						const result = await pollToolRun(
-							this,
-							(res as IDataObject).toolRunId as string,
-							commonHeaders,
-						);
-						outItems.push({ json: result, pairedItem: { item: itemIndex } });
-						break;
-					}
-					case 'getRecentRecruiterMessages': {
-						const res = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'sourcegeekCredentialsApi',
-							{
-								method: 'POST',
-								url: `${BASE_URL}/get-recent-recruiter-messages`,
-								headers: commonHeaders,
-								json: true,
-								body: {},
-							},
-						);
-						const result = await pollToolRun(
-							this,
-							(res as IDataObject).toolRunId as string,
-							commonHeaders,
-						);
-						outItems.push({ json: result, pairedItem: { item: itemIndex } });
-						break;
-					}
-					case 'getToolRun': {
-						const toolRunId = this.getNodeParameter('toolRunId', itemIndex) as string;
-						const res = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'sourcegeekCredentialsApi',
-							{
-								method: 'POST',
-								url: `${BASE_URL}/get-tool-run`,
-								headers: commonHeaders,
-								json: true,
-								body: { toolRunId },
-							},
-						);
-						outItems.push({ json: res as IDataObject, pairedItem: { item: itemIndex } });
-						break;
-					}
-					case 'importContactsBasicSearch': {
-						const url = this.getNodeParameter('url', itemIndex) as string;
-						const maxResults = this.getNodeParameter('maxResults', itemIndex, 250) as number;
-						const res = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'sourcegeekCredentialsApi',
-							{
-								method: 'POST',
-								url: `${BASE_URL}/import-contacts-basic-search`,
-								headers: commonHeaders,
-								json: true,
-								body: { url, maxResults },
-							},
-						);
-						const result = await pollToolRun(
-							this,
-							(res as IDataObject).toolRunId as string,
-							commonHeaders,
-						);
-						outItems.push({ json: result, pairedItem: { item: itemIndex } });
-						break;
-					}
-					case 'importContactsRecruiterSearch': {
-						const url = this.getNodeParameter('url', itemIndex) as string;
-						const maxResults = this.getNodeParameter('maxResults', itemIndex, 250) as number;
-						const res = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'sourcegeekCredentialsApi',
-							{
-								method: 'POST',
-								url: `${BASE_URL}/import-contacts-recruiter-search`,
-								headers: commonHeaders,
-								json: true,
-								body: { url, maxResults },
-							},
-						);
-						const result = await pollToolRun(
-							this,
-							(res as IDataObject).toolRunId as string,
-							commonHeaders,
-						);
-						outItems.push({ json: result, pairedItem: { item: itemIndex } });
-						break;
-					}
-					case 'importContactsSalesNavSearch': {
-						const url = this.getNodeParameter('url', itemIndex) as string;
-						const maxResults = this.getNodeParameter('maxResults', itemIndex, 250) as number;
-						const res = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'sourcegeekCredentialsApi',
-							{
-								method: 'POST',
-								url: `${BASE_URL}/import-contacts-sales-nav-search`,
-								headers: commonHeaders,
-								json: true,
-								body: { url, maxResults },
-							},
-						);
-						const result = await pollToolRun(
-							this,
-							(res as IDataObject).toolRunId as string,
-							commonHeaders,
-						);
-						outItems.push({ json: result, pairedItem: { item: itemIndex } });
-						break;
-					}
-					case 'sendConnectionRequest': {
-						const linkedinUrl = this.getNodeParameter('linkedinUrl', itemIndex) as string;
-						const connectionNote = this.getNodeParameter('connectionNote', itemIndex, '') as string;
-						const body: IDataObject = { linkedinUrl };
-						if (connectionNote) {
-							body.connectionNote = connectionNote;
-						}
-						const res = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'sourcegeekCredentialsApi',
-							{
-								method: 'POST',
-								url: `${BASE_URL}/send-connection-request`,
-								headers: commonHeaders,
-								json: true,
-								body,
-							},
-						);
-						const result = await pollToolRun(
-							this,
-							(res as IDataObject).toolRunId as string,
-							commonHeaders,
-						);
-						outItems.push({ json: result, pairedItem: { item: itemIndex } });
-						break;
-					}
-					case 'sendMessage': {
-						const linkedinUrl = this.getNodeParameter('linkedinUrl', itemIndex) as string;
-						const message = this.getNodeParameter('message', itemIndex) as string;
-						const res = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'sourcegeekCredentialsApi',
-							{
-								method: 'POST',
-								url: `${BASE_URL}/send-message`,
-								headers: commonHeaders,
-								json: true,
-								body: { linkedinUrl, message },
-							},
-						);
-						const result = await pollToolRun(
-							this,
-							(res as IDataObject).toolRunId as string,
-							commonHeaders,
-						);
-						outItems.push({ json: result, pairedItem: { item: itemIndex } });
-						break;
-					}
-					case 'sendRecruiterInMailMessage': {
-						const linkedinUrl = this.getNodeParameter('linkedinUrl', itemIndex) as string;
-						const subject = this.getNodeParameter('subject', itemIndex) as string;
-						const message = this.getNodeParameter('message', itemIndex) as string;
-						const linkedinProjectId = this.getNodeParameter(
-							'linkedinProjectId',
-							itemIndex,
-							'',
-						) as string;
-						const followUpMessage = this.getNodeParameter(
-							'followUpMessage',
-							itemIndex,
-							'',
-						) as string;
-						const followUpSubject = this.getNodeParameter(
-							'followUpSubject',
-							itemIndex,
-							'',
-						) as string;
-						const followUpDays = this.getNodeParameter('followUpDays', itemIndex, 3) as number;
-						const body: IDataObject = { linkedinUrl, subject, message };
-						if (linkedinProjectId) {
-							body.linkedinProjectId = linkedinProjectId;
-						}
-						if (followUpMessage) {
-							body.followUp = {
-								subject: followUpSubject || subject,
-								message: followUpMessage,
-								days: followUpDays,
-							};
-						}
-						const res = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'sourcegeekCredentialsApi',
-							{
-								method: 'POST',
-								url: `${BASE_URL}/send-recruiter-inmail-message`,
-								headers: commonHeaders,
-								json: true,
-								body,
-							},
-						);
-						const result = await pollToolRun(
-							this,
-							(res as IDataObject).toolRunId as string,
-							commonHeaders,
-						);
-						outItems.push({ json: result, pairedItem: { item: itemIndex } });
-						break;
-					}
-					case 'sendSalesNavInMailMessage': {
-						const linkedinUrl = this.getNodeParameter('linkedinUrl', itemIndex) as string;
-						const subject = this.getNodeParameter('subject', itemIndex) as string;
-						const message = this.getNodeParameter('message', itemIndex) as string;
-						const body: IDataObject = { linkedinUrl, subject, message };
-						const res = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'sourcegeekCredentialsApi',
-							{
-								method: 'POST',
-								url: `${BASE_URL}/send-sales-nav-inmail-message`,
-								headers: commonHeaders,
-								json: true,
-								body,
-							},
-						);
-						const result = await pollToolRun(
-							this,
-							(res as IDataObject).toolRunId as string,
-							commonHeaders,
-						);
-						outItems.push({ json: result, pairedItem: { item: itemIndex } });
-						break;
-					}
-					case 'getCompanyJobs': {
-						const companyUrl = this.getNodeParameter('companyUrl', itemIndex) as string;
-						const maxResults = this.getNodeParameter('maxResults', itemIndex, 100) as number;
-						const res = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'sourcegeekCredentialsApi',
-							{
-								method: 'POST',
-								url: `${BASE_URL}/get-company-jobs`,
-								headers: commonHeaders,
-								json: true,
-								body: { companyUrl, maxResults },
-							},
-						);
-						const result = await pollToolRun(
-							this,
-							(res as IDataObject).toolRunId as string,
-							commonHeaders,
-						);
-						outItems.push({ json: result, pairedItem: { item: itemIndex } });
-						break;
-					}
-					case 'getCompanyPosts': {
-						const companyUrl = this.getNodeParameter('companyUrl', itemIndex) as string;
-						const maxResults = this.getNodeParameter('maxResults', itemIndex, 100) as number;
-						const res = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'sourcegeekCredentialsApi',
-							{
-								method: 'POST',
-								url: `${BASE_URL}/get-company-posts`,
-								headers: commonHeaders,
-								json: true,
-								body: { companyUrl, maxResults },
-							},
-						);
-						const result = await pollToolRun(
-							this,
-							(res as IDataObject).toolRunId as string,
-							commonHeaders,
-						);
-						outItems.push({ json: result, pairedItem: { item: itemIndex } });
-						break;
-					}
-					case 'getConversationMessages': {
-						const participantProfileUrl = this.getNodeParameter(
-							'participantProfileUrl',
-							itemIndex,
-						) as string;
-						const maxMessages = this.getNodeParameter('maxMessages', itemIndex, 100) as number;
-						const res = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'sourcegeekCredentialsApi',
-							{
-								method: 'POST',
-								url: `${BASE_URL}/get-conversation-messages`,
-								headers: commonHeaders,
-								json: true,
-								body: { participantProfileUrl, maxMessages },
-							},
-						);
-						const result = await pollToolRun(
-							this,
-							(res as IDataObject).toolRunId as string,
-							commonHeaders,
-						);
-						outItems.push({ json: result, pairedItem: { item: itemIndex } });
-						break;
-					}
-					case 'getProfilePosts': {
-						const profileUrl = this.getNodeParameter('profileUrl', itemIndex) as string;
-						const maxResults = this.getNodeParameter('maxResults', itemIndex, 100) as number;
-						const res = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'sourcegeekCredentialsApi',
-							{
-								method: 'POST',
-								url: `${BASE_URL}/get-profile-posts`,
-								headers: commonHeaders,
-								json: true,
-								body: { profileUrl, maxResults },
-							},
-						);
-						const result = await pollToolRun(
-							this,
-							(res as IDataObject).toolRunId as string,
-							commonHeaders,
-						);
-						outItems.push({ json: result, pairedItem: { item: itemIndex } });
-						break;
-					}
-					case 'importCompanyFollowers': {
-						const companyUrl = this.getNodeParameter('companyUrl', itemIndex) as string;
-						const maxResults = this.getNodeParameter('maxResults', itemIndex, 100) as number;
-						const res = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'sourcegeekCredentialsApi',
-							{
-								method: 'POST',
-								url: `${BASE_URL}/import-company-followers`,
-								headers: commonHeaders,
-								json: true,
-								body: { companyUrl, maxResults },
-							},
-						);
-						const result = await pollToolRun(
-							this,
-							(res as IDataObject).toolRunId as string,
-							commonHeaders,
-						);
-						outItems.push({ json: result, pairedItem: { item: itemIndex } });
-						break;
-					}
-					case 'importGroupMembers': {
-						const groupUrl = this.getNodeParameter('groupUrl', itemIndex) as string;
-						const maxResults = this.getNodeParameter('maxResults', itemIndex, 100) as number;
-						const res = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'sourcegeekCredentialsApi',
-							{
-								method: 'POST',
-								url: `${BASE_URL}/import-group-members`,
-								headers: commonHeaders,
-								json: true,
-								body: { groupUrl, maxResults },
-							},
-						);
-						const result = await pollToolRun(
-							this,
-							(res as IDataObject).toolRunId as string,
-							commonHeaders,
-						);
-						outItems.push({ json: result, pairedItem: { item: itemIndex } });
-						break;
-					}
-					case 'importPostComments': {
-						const postUrl = this.getNodeParameter('postUrl', itemIndex) as string;
-						const maxResults = this.getNodeParameter('maxResults', itemIndex, 100) as number;
-						const res = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'sourcegeekCredentialsApi',
-							{
-								method: 'POST',
-								url: `${BASE_URL}/import-post-comments`,
-								headers: commonHeaders,
-								json: true,
-								body: { postUrl, maxResults },
-							},
-						);
-						const result = await pollToolRun(
-							this,
-							(res as IDataObject).toolRunId as string,
-							commonHeaders,
-						);
-						outItems.push({ json: result, pairedItem: { item: itemIndex } });
-						break;
-					}
-					case 'importPostLikes': {
-						const postUrl = this.getNodeParameter('postUrl', itemIndex) as string;
-						const maxResults = this.getNodeParameter('maxResults', itemIndex, 100) as number;
-						const res = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'sourcegeekCredentialsApi',
-							{
-								method: 'POST',
-								url: `${BASE_URL}/import-post-likes`,
-								headers: commonHeaders,
-								json: true,
-								body: { postUrl, maxResults },
-							},
-						);
-						const result = await pollToolRun(
-							this,
-							(res as IDataObject).toolRunId as string,
-							commonHeaders,
-						);
-						outItems.push({ json: result, pairedItem: { item: itemIndex } });
-						break;
-					}
-					case 'importProfileViewers': {
-						const maxResults = this.getNodeParameter('maxResults', itemIndex, 100) as number;
-						const timeRange = this.getNodeParameter('timeRange', itemIndex, '') as string;
-						const body: IDataObject = { maxResults };
-						if (timeRange) {
-							body.timeRange = timeRange;
-						}
-						const res = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'sourcegeekCredentialsApi',
-							{
-								method: 'POST',
-								url: `${BASE_URL}/import-profile-viewers`,
-								headers: commonHeaders,
-								json: true,
-								body,
-							},
-						);
-						const result = await pollToolRun(
-							this,
-							(res as IDataObject).toolRunId as string,
-							commonHeaders,
-						);
-						outItems.push({ json: result, pairedItem: { item: itemIndex } });
-						break;
-					}
-				}
-			} catch (error) {
-				if (this.continueOnFail()) {
-					outItems.push({
-						json: {
-							error: (error as { message?: string }).message ?? (error as unknown as IDataObject),
-						} as IDataObject,
-						pairedItem: { item: itemIndex },
-					});
-					continue;
-				} else {
-					if (error.context) {
-						error.context.itemIndex = itemIndex;
-						throw error;
-					}
-					throw new NodeOperationError(this.getNode(), error, {
+				const operation = this.getNodeParameter('operation', itemIndex) as string;
+				const tool = toolByName.get(operation);
+				if (!tool) {
+					throw new NodeOperationError(this.getNode(), `Unknown operation: ${operation}`, {
 						itemIndex,
 					});
 				}
+
+				const body: IDataObject = {};
+				const required = tool.inputSchema.required ?? [];
+				const set = (name: string, value: unknown) => {
+					let input: unknown;
+					try {
+						input = toInput(tool.name, name, value);
+					} catch {
+						throw new NodeOperationError(this.getNode(), `${name} must be valid JSON`, {
+							itemIndex,
+						});
+					}
+					if (input !== undefined) body[name] = input as IDataObject[keyof IDataObject];
+				};
+				for (const name of required) {
+					set(name, this.getNodeParameter(name, itemIndex));
+				}
+				const additional = this.getNodeParameter('additionalFields', itemIndex, {}) as IDataObject;
+				for (const [name, value] of Object.entries(additional)) set(name, value);
+
+				const request: IHttpRequestOptions = {
+					method: 'POST',
+					url: `${baseUrl}/api/v1/tools/${encodeURIComponent(tool.name)}`,
+					headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+					json: true,
+					body,
+					returnFullResponse: true,
+					ignoreHttpStatusErrors: true,
+				};
+				const response = (await this.helpers.httpRequestWithAuthentication.call(
+					this,
+					'sourcegeekCredentialsApi',
+					request,
+				)) as { statusCode: number; body: IDataObject };
+
+				if (response.statusCode >= 400) {
+					const message =
+						(response.body?.error as string | undefined) ??
+						`SourceGeek answered with status ${response.statusCode}`;
+					throw new NodeApiError(
+						this.getNode(),
+						{ ...response.body, httpCode: String(response.statusCode) },
+						{ message, httpCode: String(response.statusCode), itemIndex },
+					);
+				}
+
+				const result = response.body?.result;
+				const json =
+					result && typeof result === 'object' && !Array.isArray(result)
+						? (result as IDataObject)
+						: ({ result } as IDataObject);
+				outItems.push({ json, pairedItem: { item: itemIndex } });
+			} catch (error) {
+				if (this.continueOnFail()) {
+					outItems.push({
+						json: { error: (error as Error).message },
+						pairedItem: { item: itemIndex },
+					});
+					continue;
+				}
+				if (error instanceof NodeApiError || error instanceof NodeOperationError) throw error;
+				throw new NodeOperationError(this.getNode(), error as Error, { itemIndex });
 			}
 		}
 

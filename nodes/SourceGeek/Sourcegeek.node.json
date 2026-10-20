@@ -1,17 +1,17 @@
 {
 	"node": "n8n-nodes-base.Sourcegeek",
-	"nodeVersion": "1.0",
+	"nodeVersion": "2.0",
 	"codexVersion": "1.0",
 	"categories": ["Miscellaneous"],
 	"resources": {
 		"credentialDocumentation": [
 			{
-				"url": "https://support.sourcegeek.com/en/articles/12441230-n8n-integration"
+				"url": "https://github.com/sourcegeekinc/n8n-nodes-sourcegeek#credentials"
 			}
 		],
 		"primaryDocumentation": [
 			{
-				"url": "https://support.sourcegeek.com/en/articles/12441230-n8n-integration"
+				"url": "https://github.com/sourcegeekinc/n8n-nodes-sourcegeek#readme"
 			}
 		]
 	}

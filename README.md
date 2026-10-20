@@ -1,17 +1,17 @@
 ![Banner image](https://pub-9f6d72605bf54a19ab5a9a098f99e37c.r2.dev/sourcegeek-hero-github.png)
 
-# SourceGeek n8n node for LinkedIn
+# SourceGeek n8n node
 
-This is an n8n community node. It lets you use SourceGeek and LinkedIn in your n8n workflows.
+This is an n8n community node. It lets you use SourceGeek's tools in your n8n workflows: the same tools SourceGeek's chat agent and its Claude connector use.
 
 [n8n](https://n8n.io/) is a [fair-code licensed](https://docs.n8n.io/reference/license/) workflow automation platform.
 
 [Installation](#installation)  
 [Operations](#operations)  
-[Credentials](#credentials)
+[Credentials](#credentials)  
 [Compatibility](#compatibility)  
-[Usage](#usage)
-[Resources](#resources)  
+[Development](#development)  
+[Resources](#resources)
 
 ## Installation
 
@@ -19,33 +19,40 @@ Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes
 
 ## Operations
 
-* Get Data From A Linkedin Profile
-* Import Contacts - Basic Search
-* Import Contacts - Recruiter Search
-* Import Contacts - Sales Navigator Search
-* Send Connection Request
-* Send Message
-* Send Recruiter InMail Message
+One action per SourceGeek tool, grouped by resource:
+
+* **Search**: fast and precision searches for candidates, companies and jobs, entity enrichment, rediscovered talent
+* **Employee Data (LinkedIn)**: public profiles, companies, jobs, posts, comments and reactions, contact details
+* **Sheet and Shortlist**: create and read sheets, score candidates, create shortlists, read shortlist feedback
+* **Project**: list projects and tasks, plan and start tasks, read task results
+* **Memory and Workspace Context**: remember, forget and list memories; read and update workspace context
+* **Occupation and Skill (ESCO)** and **Labour Market Statistics (CBS)**
+
+Each action's fields come from the tool's input schema: required inputs are fields, optional ones are under **Additional Fields**. An action returns the tool's result as the item's JSON. Tools that spend SourceGeek credits spend the workspace's credits, as in the chat.
 
 ## Credentials
 
-To be able to use this SourceGeek n8n integration, you need to follow these steps:
-1. Sign up for a free SourceGeek account at [app.sourcegeek.com/login](https://app.sourcegeek.com/signup)
-2. Create n8n integration in SourceGeek Integrations settings [page](https://app.sourcegeek.com/settings/integrations) by pressing the "Add Integration" button and selecting "n8n"
-3. Click on "Copy API Key" button and paste it in the API Key field in the n8n credentials
+1. Sign in to SourceGeek at [chat.sourcegeek.com](https://chat.sourcegeek.com).
+2. Open **Settings → Connected apps**, and under **API keys** click **Create API key**.
+3. Copy the key (it is shown once) and paste it into the **API Key** field of the **SourceGeek API** credential in n8n.
 
-For more information, please refer to the [SourceGeek documentation](https://support.sourcegeek.com/en/articles/12441230-n8n-integration).
+The key acts as you in that workspace. Revoke it under **Settings → Connected apps** to cut n8n off. Leave **Base URL** as `https://chat.sourcegeek.com`.
 
 ## Compatibility
 
-* Tested against: 1.112.6
-* Minimum n8n version: works with all recent n8n versions
+* Requires an n8n version with community node support (tested against 1.112).
+* Version 2 of the node replaces version 1's LinkedIn automation actions and its API keys, which worked with the old SourceGeek app.
 
-## Usage
+## Development
 
-For more information, please refer to the [SourceGeek documentation](https://support.sourcegeek.com/en/articles/12441230-n8n-integration).
+The actions are built from `nodes/SourceGeek/tools.json`, a snapshot of SourceGeek's tool catalog (`GET /api/v1/tools`). Refresh it when SourceGeek's tools change:
+
+```bash
+SOURCEGEEK_API_KEY=sgk_... npm run sync-tools
+npm run build && npm run lint
+```
 
 ## Resources
 
 * [n8n community nodes documentation](https://docs.n8n.io/integrations/#community-nodes)
-* [SourceGeek documentation](https://support.sourcegeek.com/en/articles/12441230-n8n-integration)
+* [SourceGeek support](https://support.sourcegeek.com)

@@ -4,13 +4,14 @@ import {
 	ICredentialType,
 	INodeProperties,
 } from 'n8n-workflow';
-import { BASE_URL } from '../nodes/SourceGeek/actions';
+
+export const DEFAULT_BASE_URL = 'https://chat.sourcegeek.com';
 
 export class SourcegeekCredentialsApi implements ICredentialType {
 	name = 'sourcegeekCredentialsApi';
-	displayName = 'Sourcegeek Credentials API';
+	displayName = 'SourceGeek API';
 
-	documentationUrl = 'https://support.sourcegeek.com/en/articles/12441230-n8n-integration';
+	documentationUrl = 'https://github.com/sourcegeekinc/n8n-nodes-sourcegeek#credentials';
 
 	properties: INodeProperties[] = [
 		{
@@ -21,6 +22,15 @@ export class SourcegeekCredentialsApi implements ICredentialType {
 				password: true,
 			},
 			default: '',
+			required: true,
+			description: 'A SourceGeek API key, from Settings → Connected apps → API keys in SourceGeek',
+		},
+		{
+			displayName: 'Base URL',
+			name: 'baseUrl',
+			type: 'string',
+			default: DEFAULT_BASE_URL,
+			description: 'The SourceGeek address. Leave as is unless SourceGeek told you otherwise.',
 		},
 	];
 
@@ -35,20 +45,17 @@ export class SourcegeekCredentialsApi implements ICredentialType {
 
 	test: ICredentialTestRequest = {
 		request: {
-			baseURL: BASE_URL,
-			url: '/test-credentials',
-			method: 'POST',
-			headers: {
-				Authorization: '=Bearer {{$credentials.apiKey}}',
-			},
+			baseURL: `={{($credentials.baseUrl || "${DEFAULT_BASE_URL}").replace(/\\/+$/, "")}}/api/v1`,
+			url: '/me',
+			method: 'GET',
 			json: true,
 		},
 		rules: [
 			{
 				type: 'responseCode',
 				properties: {
-					value: 200,
-					message: 'Credentials are valid',
+					value: 401,
+					message: 'The API key is invalid or was revoked',
 				},
 			},
 		],
