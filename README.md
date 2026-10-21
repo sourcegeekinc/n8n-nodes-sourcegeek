@@ -1,4 +1,4 @@
-![Banner image](https://pub-9f6d72605bf54a19ab5a9a098f99e37c.r2.dev/sourcegeek-hero-github.png)
+![SourceGeek × n8n](images/banner.png)
 
 # SourceGeek n8n node
 
