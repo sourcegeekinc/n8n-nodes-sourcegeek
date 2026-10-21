@@ -42,7 +42,7 @@ type Resource = { value: string; name: string; matches: (tool: string) => boolea
 const RESOURCES: Resource[] = [
 	{
 		value: 'employeeData',
-		name: 'Employee Data (LinkedIn)',
+		name: 'Employee Data',
 		matches: (tool) => tool.startsWith('employee_') || tool === 'get_employee_contact_details',
 	},
 	{
@@ -106,7 +106,8 @@ const ACRONYMS: Record<string, string> = {
 	cbs: 'CBS',
 	uri: 'URI',
 	uris: 'URIs',
-	linkedin: 'LinkedIn',
+	// A field such as linkedinUsernameOrUrl reads as "Profile Username Or URL".
+	linkedin: 'Profile',
 };
 
 /** `searchId` → "Search ID", `company_url` → "Company URL". */
@@ -120,8 +121,27 @@ export function displayName(name: string): string {
 }
 
 /** n8n wants descriptions that start upper case and end with a period. */
+/**
+ * The node is SourceGeek's, not a LinkedIn integration: tool descriptions
+ * (written for SourceGeek's agent) are shown without naming LinkedIn. URL
+ * examples such as linkedin.com/in/… stay, since they say what to paste.
+ */
+const NEUTRAL: Array<[RegExp, string]> = [
+	[/\bLinkedIn's own\b/g, 'its own'],
+	[/\bwhen LinkedIn has no page mapped\b/g, 'when no page is mapped'],
+	[/\bpages LinkedIn surfaces as\b/g, 'pages surfaced as'],
+	[/\bmembers LinkedIn shows on\b/g, 'members shown on'],
+	[/\ba LinkedIn column\b/g, 'a profile URL column'],
+	[/\bLinkedIn(?:'s)? (?=\w)/g, ''],
+	[/\bLinkedIn\b/g, 'profile'],
+];
+
+function neutral(text: string): string {
+	return NEUTRAL.reduce((out, [pattern, replacement]) => out.replace(pattern, replacement), text);
+}
+
 function sentence(text: string | undefined): string | undefined {
-	const trimmed = text?.trim();
+	const trimmed = text && neutral(text).trim();
 	if (!trimmed) return undefined;
 	const capitalised = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
 	return /[.!?)]$/.test(capitalised) ? capitalised : `${capitalised}.`;
@@ -267,7 +287,7 @@ export const OPERATIONS: INodeProperties[] = resources.map((resource) => {
 	const tools = TOOLS.filter((tool) => resourceOf(tool.name) === resource.value);
 	const options = tools
 		.map((tool) => {
-			const title = tool.title?.trim() || displayName(tool.name);
+			const title = neutral(tool.title?.trim() || displayName(tool.name));
 			return {
 				name: title,
 				value: tool.name,

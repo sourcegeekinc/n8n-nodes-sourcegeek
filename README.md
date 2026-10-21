@@ -22,7 +22,7 @@ Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes
 One action per SourceGeek tool, grouped by resource:
 
 * **Search**: fast and precision searches for candidates, companies and jobs, entity enrichment, rediscovered talent
-* **Employee Data (LinkedIn)**: public profiles, companies, jobs, posts, comments and reactions, contact details
+* **Employee Data**: public profiles, companies, jobs, posts, comments and reactions, contact details
 * **Sheet and Shortlist**: create and read sheets, score candidates, create shortlists, read shortlist feedback
 * **Project**: list projects and tasks, plan and start tasks, read task results
 * **Memory and Workspace Context**: remember, forget and list memories; read and update workspace context
@@ -41,7 +41,7 @@ The key acts as you in that workspace. Revoke it under **Settings → Connected 
 ## Compatibility
 
 * Requires an n8n version with community node support (tested against 1.112).
-* Version 2 of the node replaces version 1's LinkedIn automation actions and its API keys, which worked with the old SourceGeek app.
+* Version 2 of the node replaces version 1's actions and its API keys, which worked with the old SourceGeek app.
 
 ## Development
 
