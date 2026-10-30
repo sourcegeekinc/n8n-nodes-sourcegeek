@@ -1,5 +1,6 @@
 import {
 	IAuthenticateGeneric,
+	Icon,
 	ICredentialTestRequest,
 	ICredentialType,
 	INodeProperties,
@@ -10,6 +11,11 @@ export const DEFAULT_BASE_URL = 'https://chat.sourcegeek.com';
 export class SourcegeekCredentialsApi implements ICredentialType {
 	name = 'sourcegeekCredentialsApi';
 	displayName = 'SourceGeek API';
+
+	icon: Icon = {
+		light: 'file:../nodes/SourceGeek/sourcegeek.svg',
+		dark: 'file:../nodes/SourceGeek/sourcegeek.svg',
+	};
 
 	documentationUrl = 'https://github.com/sourcegeekinc/n8n-nodes-sourcegeek#credentials';
 

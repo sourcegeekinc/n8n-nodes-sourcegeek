@@ -1,6 +1,6 @@
 {
-	"node": "n8n-nodes-base.Sourcegeek",
-	"nodeVersion": "2.0",
+	"node": "n8n-nodes-sourcegeek.Sourcegeek",
+	"nodeVersion": "1.0",
 	"codexVersion": "1.0",
 	"categories": ["Miscellaneous"],
 	"resources": {
