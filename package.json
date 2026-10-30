@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-sourcegeek",
-	"version": "2.0.1",
+	"version": "2.0.2",
 	"description": "SourceGeek n8n node: search candidates, companies and jobs, and work with your SourceGeek workspace",
 	"keywords": [
 		"n8n-community-node-package",
