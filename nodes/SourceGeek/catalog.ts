@@ -272,14 +272,16 @@ const resources = RESOURCES.filter((resource) =>
 	TOOLS.some((tool) => resourceOf(tool.name) === resource.value),
 );
 
-// eslint-disable-next-line n8n-nodes-base/node-param-default-missing -- the default is computed
+const resourceOptions = resources.map(({ name, value }) => ({ name, value })).sort(byName);
+const defaultResource = resources[0]?.value ?? 'other';
+
 export const RESOURCE: INodeProperties = {
 	displayName: 'Resource',
 	name: 'resource',
 	type: 'options',
 	noDataExpression: true,
-	options: resources.map(({ name, value }) => ({ name, value })).sort(byName),
-	default: resources[0]?.value ?? 'other',
+	options: resourceOptions,
+	default: defaultResource,
 };
 
 /** One Operation field per resource, listing its tools. */
@@ -296,7 +298,7 @@ export const OPERATIONS: INodeProperties[] = resources.map((resource) => {
 			};
 		})
 		.sort(byName);
-	// eslint-disable-next-line n8n-nodes-base/node-param-default-missing -- the default is computed
+	const defaultOperation = options[0]?.value ?? '';
 	return {
 		displayName: 'Operation',
 		name: 'operation',
@@ -304,7 +306,7 @@ export const OPERATIONS: INodeProperties[] = resources.map((resource) => {
 		noDataExpression: true,
 		displayOptions: { show: { resource: [resource.value] } },
 		options,
-		default: options[0]?.value ?? '',
+		default: defaultOperation,
 	};
 });
 

@@ -6,7 +6,7 @@ import type {
 	INodeType,
 	INodeTypeDescription,
 } from 'n8n-workflow';
-import { NodeApiError, NodeOperationError } from 'n8n-workflow';
+import { NodeApiError, NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 
 import { DEFAULT_BASE_URL } from '../../credentials/SourcegeekCredentialsApi.credentials';
 import { FIELDS, OPERATIONS, RESOURCE, toInput, toolByName } from './catalog';
@@ -15,7 +15,7 @@ export class Sourcegeek implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'SourceGeek',
 		name: 'sourcegeek',
-		icon: 'file:sourcegeek.svg',
+		icon: { light: 'file:sourcegeek.svg', dark: 'file:sourcegeek.svg' },
 		group: ['transform'],
 		version: 2,
 		subtitle: '={{$parameter["operation"]}}',
@@ -23,8 +23,8 @@ export class Sourcegeek implements INodeType {
 		defaults: {
 			name: 'SourceGeek',
 		},
-		inputs: ['main'],
-		outputs: ['main'],
+		inputs: [NodeConnectionTypes.Main],
+		outputs: [NodeConnectionTypes.Main],
 		usableAsTool: true,
 		credentials: [
 			{
@@ -111,7 +111,6 @@ export class Sourcegeek implements INodeType {
 					});
 					continue;
 				}
-				if (error instanceof NodeApiError || error instanceof NodeOperationError) throw error;
 				throw new NodeOperationError(this.getNode(), error as Error, { itemIndex });
 			}
 		}
