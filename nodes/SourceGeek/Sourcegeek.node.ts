@@ -9,7 +9,21 @@ import type {
 import { NodeApiError, NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 
 import { DEFAULT_BASE_URL } from '../../credentials/SourcegeekCredentialsApi.credentials';
-import { FIELDS, OPERATIONS, RESOURCE, toInput, toolByName } from './catalog';
+import {
+	FIELDS,
+	isPaged,
+	isPagingInput,
+	maxPerCall,
+	OPERATIONS,
+	RESOURCE,
+	resultItem,
+	resultRecords,
+	toInput,
+	toolByName,
+} from './catalog';
+
+/** Stops Return All from spending credits forever if a provider never runs out of pages. */
+const MAX_PAGES = 1000;
 
 export class Sourcegeek implements INodeType {
 	description: INodeTypeDescription = {
@@ -69,40 +83,73 @@ export class Sourcegeek implements INodeType {
 					set(name, this.getNodeParameter(name, itemIndex));
 				}
 				const additional = this.getNodeParameter('additionalFields', itemIndex, {}) as IDataObject;
-				for (const [name, value] of Object.entries(additional)) set(name, value);
-
-				const request: IHttpRequestOptions = {
-					method: 'POST',
-					url: `${baseUrl}/api/v1/tools/${encodeURIComponent(tool.name)}`,
-					headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-					json: true,
-					body,
-					returnFullResponse: true,
-					ignoreHttpStatusErrors: true,
-				};
-				const response = (await this.helpers.httpRequestWithAuthentication.call(
-					this,
-					'sourcegeekCredentialsApi',
-					request,
-				)) as { statusCode: number; body: IDataObject };
-
-				if (response.statusCode >= 400) {
-					const message =
-						(response.body?.error as string | undefined) ??
-						`SourceGeek answered with status ${response.statusCode}`;
-					throw new NodeApiError(
-						this.getNode(),
-						{ ...response.body, httpCode: String(response.statusCode) },
-						{ message, httpCode: String(response.statusCode), itemIndex },
-					);
+				const paged = isPaged(tool);
+				for (const [name, value] of Object.entries(additional)) {
+					// A workflow saved before Return All / Limit can still hold paging inputs.
+					if (!paged || !isPagingInput(name)) set(name, value);
 				}
 
-				const result = response.body?.result;
-				const json =
-					result && typeof result === 'object' && !Array.isArray(result)
-						? (result as IDataObject)
-						: ({ result } as IDataObject);
-				outItems.push({ json, pairedItem: { item: itemIndex } });
+				const callTool = async (input: IDataObject) => {
+					const request: IHttpRequestOptions = {
+						method: 'POST',
+						url: `${baseUrl}/api/v1/tools/${encodeURIComponent(tool.name)}`,
+						qs: { format: 'json' },
+						headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+						json: true,
+						body: input,
+						returnFullResponse: true,
+						ignoreHttpStatusErrors: true,
+					};
+					const response = (await this.helpers.httpRequestWithAuthentication.call(
+						this,
+						'sourcegeekCredentialsApi',
+						request,
+					)) as { statusCode: number; body: IDataObject };
+
+					if (response.statusCode >= 400) {
+						const message =
+							(response.body?.error as string | undefined) ??
+							`SourceGeek answered with status ${response.statusCode}`;
+						throw new NodeApiError(
+							this.getNode(),
+							{ ...response.body, httpCode: String(response.statusCode) },
+							{ message, httpCode: String(response.statusCode), itemIndex },
+						);
+					}
+					return response.body?.result;
+				};
+
+				if (!paged) {
+					outItems.push({
+						json: resultItem(await callTool(body)),
+						pairedItem: { item: itemIndex },
+					});
+					continue;
+				}
+
+				const returnAll = this.getNodeParameter('returnAll', itemIndex, false) as boolean;
+				const limit = returnAll
+					? Infinity
+					: (this.getNodeParameter('limit', itemIndex, 50) as number);
+				const records: IDataObject[] = [];
+				let input: IDataObject = { ...body, limit: maxPerCall(tool) };
+				for (let page = 1; ; page++) {
+					const result = await callTool(input);
+					records.push(...resultRecords(result));
+					const next = (result as IDataObject | undefined)?.next as IDataObject | undefined;
+					if (!next || records.length >= limit) break;
+					if (page === MAX_PAGES) {
+						throw new NodeOperationError(
+							this.getNode(),
+							`Stopped after ${MAX_PAGES} pages: set a Limit to fetch fewer results`,
+							{ itemIndex },
+						);
+					}
+					input = { ...input, ...next };
+				}
+				for (const json of records.slice(0, limit)) {
+					outItems.push({ json, pairedItem: { item: itemIndex } });
+				}
 			} catch (error) {
 				if (this.continueOnFail()) {
 					outItems.push({

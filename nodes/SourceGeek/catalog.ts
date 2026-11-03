@@ -1,4 +1,9 @@
-import type { IDataObject, INodeProperties, INodePropertyOptions } from 'n8n-workflow';
+import type {
+	IDataObject,
+	IDisplayOptions,
+	INodeProperties,
+	INodePropertyOptions,
+} from 'n8n-workflow';
 
 import catalog from './tools.json';
 
@@ -33,6 +38,19 @@ export type Tool = {
 };
 
 export const TOOLS: Tool[] = (catalog as unknown as { tools: Tool[] }).tools;
+
+/** Inputs for fetching pages, which the node fills in itself. */
+const PAGING_INPUTS = ['page', 'start', 'offset', 'paginationToken'];
+
+/** A list tool: offered as Return All / Limit, with the node fetching the pages. */
+export const isPaged = (tool: Tool) =>
+	PAGING_INPUTS.some((name) => tool.inputSchema.properties?.[name]);
+
+/** Whether a tool input is set by the node when it pages this tool. */
+export const isPagingInput = (name: string) => name === 'limit' || PAGING_INPUTS.includes(name);
+
+/** The most a tool returns per call, so that a provider page comes back whole. */
+export const maxPerCall = (tool: Tool) => tool.inputSchema.properties?.limit?.maximum;
 
 /** How a field's n8n value becomes the tool's input. */
 export type FieldKind = 'value' | 'json' | 'list';
@@ -310,12 +328,35 @@ export const OPERATIONS: INodeProperties[] = resources.map((resource) => {
 	};
 });
 
+const pagingFields = (show: IDisplayOptions['show']): INodeProperties[] => [
+	{
+		displayName: 'Return All',
+		name: 'returnAll',
+		type: 'boolean',
+		default: false,
+		description: 'Whether to return all results or only up to a given limit',
+		hint: 'Tools that spend credits spend them for every page fetched',
+		displayOptions: { show },
+	},
+	{
+		displayName: 'Limit',
+		name: 'limit',
+		type: 'number',
+		typeOptions: { minValue: 1 },
+		default: 50,
+		description: 'Max number of results to return',
+		displayOptions: { show: { ...show, returnAll: [false] } },
+	},
+];
+
 /**
  * Each tool's required inputs as fields, and its optional ones in an
- * "Additional Fields" collection.
+ * "Additional Fields" collection. List tools get Return All / Limit instead
+ * of their paging inputs.
  */
 export const FIELDS: INodeProperties[] = TOOLS.flatMap((tool) => {
 	const show = { show: { resource: [resourceOf(tool.name)], operation: [tool.name] } };
+	const paged = isPaged(tool);
 	const properties = tool.inputSchema.properties ?? {};
 	const required = new Set(tool.inputSchema.required ?? []);
 	const requiredFields = Object.entries(properties)
@@ -324,12 +365,13 @@ export const FIELDS: INodeProperties[] = TOOLS.flatMap((tool) => {
 			clean({ ...field(tool.name, name, schema, true), displayOptions: show }),
 		);
 	const optional = Object.entries(properties)
-		.filter(([name]) => !required.has(name))
+		.filter(([name]) => !required.has(name) && !(paged && isPagingInput(name)))
 		.map(([name, schema]) => clean(field(tool.name, name, schema, false)))
 		.sort((a, b) => a.displayName.localeCompare(b.displayName));
+	const fields = paged ? [...requiredFields, ...pagingFields(show.show)] : requiredFields;
 	return optional.length
 		? [
-				...requiredFields,
+				...fields,
 				{
 					displayName: 'Additional Fields',
 					name: 'additionalFields',
@@ -340,7 +382,7 @@ export const FIELDS: INodeProperties[] = TOOLS.flatMap((tool) => {
 					options: optional,
 				} as INodeProperties,
 			]
-		: requiredFields;
+		: fields;
 });
 
 export const toolByName = new Map(TOOLS.map((tool) => [tool.name, tool]));
@@ -366,4 +408,19 @@ export function toInput(tool: string, name: string, value: unknown): unknown {
 	}
 	if (value === '') return undefined;
 	return value;
+}
+
+const toJson = (value: unknown): IDataObject =>
+	value && typeof value === 'object' && !Array.isArray(value)
+		? (value as IDataObject)
+		: ({ result: value } as IDataObject);
+
+/** A tool's result as one n8n item. */
+export const resultItem = toJson;
+
+/** One n8n item per record in a list tool's result. */
+export function resultRecords(result: unknown): IDataObject[] {
+	const list = toJson(result);
+	const records = Object.values(list).find(Array.isArray) as unknown[] | undefined;
+	return records ? records.map(toJson) : [list];
 }
