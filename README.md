@@ -28,7 +28,7 @@ One action per SourceGeek tool, grouped by resource:
 * **Memory and Workspace Context**: remember, forget and list memories; read and update workspace context
 * **Occupation and Skill (ESCO)** and **Labour Market Statistics (CBS)**
 
-Each action's fields come from the tool's input schema: required inputs are fields, optional ones are under **Additional Fields**. An action returns the tool's result as the item's JSON. Tools that spend SourceGeek credits spend the workspace's credits, as in the chat.
+Each action's fields come from the tool's input schema: required inputs are fields, optional ones are under **Additional Fields**. An action returns the tool's result as the item's JSON. List actions offer **Return All** and **Limit** instead: the node fetches the pages itself and returns one item per result. Tools that spend SourceGeek credits spend the workspace's credits, as in the chat, for every page fetched.
 
 ## Credentials
 
