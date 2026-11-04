@@ -3,7 +3,7 @@
 		{
 			"name": "create_sheet",
 			"title": "Create sheet",
-			"description": "Save tabular data as a SourceGeek sheet in the user's workspace, where their team can open, share and score it. Provide the full CSV content: a header row followed by one row per record. When the CSV came from a candidate search, also pass that search's searchId so the sheet carries the full candidate details. To add more candidates to a sheet you already created, pass its artifactId: only candidates not yet in it are appended. For candidate sheets, keep a LinkedIn column so the sheet can be scored. Returns the sheet id and its URL in SourceGeek.",
+			"description": "Save tabular data as a SourceGeek sheet in the user's workspace, where their team can open, share and score it. Provide the full CSV content: a header row followed by one row per record. When the CSV came from a candidate search, also pass that search's searchId so the sheet carries the full candidate details. To add more candidates to a sheet you already created, pass its artifactId: only candidates not yet in it are appended. For candidate sheets, keep the profile URL column so the sheet can be scored. Candidate rows from a search are then enriched in the background from public profiles, which spends the workspace's credits. Returns the sheet id and its URL in SourceGeek.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
@@ -16,7 +16,7 @@
 					"csv": {
 						"type": "string",
 						"minLength": 1,
-						"description": "Complete CSV content: a header row followed by one row per record. For candidate sheets, include a LinkedIn column so the sheet can be scored later."
+						"description": "Complete CSV content: a header row followed by one row per record. For candidate sheets, include a profile URL column so the sheet can be scored later."
 					},
 					"searchId": {
 						"type": "string",
@@ -33,23 +33,23 @@
 				"title": "Create sheet",
 				"readOnlyHint": false,
 				"destructiveHint": false,
-				"openWorldHint": false
+				"openWorldHint": true
 			}
 		},
 		{
 			"name": "get_employee_contact_details",
 			"title": "Get employee profile",
-			"description": "Get detailed LinkedIn profile/contact data from RapidAPI by LinkedIn username or LinkedIn profile URL. This is the preferred source for a specific person's LinkedIn data — use it over Exa/web search whenever a profile URL or username is known. Enriches a candidate with work history, education, skills, headline, summary, and location. Returns real RapidAPI fields only.",
+			"description": "Get a person's employee data — work history, education, skills, headline, summary and location from their public profile — by profile username or profile URL, from RapidAPI data vendors. The preferred source for a specific person's employee data: use it over web search whenever a profile URL or username is known. Returns the vendor's fields only.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
-					"linkedinUsernameOrUrl": {
+					"usernameOrUrl": {
 						"type": "string",
 						"minLength": 1,
-						"description": "A LinkedIn username such as 'janedoe' or a profile URL such as 'https://www.linkedin.com/in/janedoe'."
+						"description": "A profile username such as 'janedoe' or a public profile URL ending in /in/janedoe."
 					}
 				},
-				"required": ["linkedinUsernameOrUrl"]
+				"required": ["usernameOrUrl"]
 			},
 			"annotations": {
 				"title": "Get employee profile",
@@ -127,7 +127,7 @@
 		{
 			"name": "create_shortlist",
 			"title": "Create shortlist",
-			"description": "Create an evidence-backed markdown shortlist from a scored candidate sheet. The tool ranks candidates by score, writes table and dossier sections, labels confirmed evidence, inferred fit, missing information, risks, next actions, and outreach angles, then saves the shortlist as a text artifact.",
+			"description": "Create an evidence-backed markdown shortlist from a scored candidate sheet. The tool ranks candidates by score, writes table and dossier sections, labels confirmed evidence, inferred fit, missing information, risks, next actions, and outreach angles, then saves the shortlist as a text artifact. It returns the shortlisted candidates with their rank, score and main reason.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
@@ -161,7 +161,7 @@
 		{
 			"name": "enrich_entity",
 			"title": "Enrich a person or company",
-			"description": "Enrich a known entity (description or URL) with specific structured string fields and citation-backed reasoning.",
+			"description": "Enrich a known entity (description or URL) with specific structured string fields and citation-backed reasoning. Starts a paid run with an external research provider and spends the workspace's credits.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
@@ -552,7 +552,7 @@
 		{
 			"name": "find_all_entities",
 			"title": "Find people or companies by criteria",
-			"description": "Discover and evaluate people or companies against explicit match conditions. Returns verified matches with reasoning when complete; may return a findall id if the time budget is exceeded.",
+			"description": "Discover and evaluate people or companies against explicit match conditions. Returns verified matches with reasoning when complete; may return a findall id if the time budget is exceeded. Starts a paid run with an external research provider and spends the workspace's credits.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
@@ -651,7 +651,7 @@
 		{
 			"name": "remember",
 			"title": "Remember a fact",
-			"description": "Remember one stable fact or preference — for the current user, or (shared: true) for the whole workspace.",
+			"description": "Remember one stable fact or preference — for the current user, or (shared: true) for the whole workspace. Saving under an existing key replaces its value.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
@@ -676,7 +676,7 @@
 			"annotations": {
 				"title": "Remember a fact",
 				"readOnlyHint": false,
-				"destructiveHint": false,
+				"destructiveHint": true,
 				"openWorldHint": false
 			}
 		},
@@ -722,7 +722,7 @@
 		{
 			"name": "upsert_workspace_context",
 			"title": "Save workspace context entry",
-			"description": "Create or update one workspace context entry (key, title, markdown content). Workspace admins only; manual entries survive the daily auto-refresh.",
+			"description": "Create or update one workspace context entry (key, title, markdown content). Updating an existing key replaces its title and content. Workspace admins only; manual entries survive the daily auto-refresh.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
@@ -751,7 +751,7 @@
 			"annotations": {
 				"title": "Save workspace context entry",
 				"readOnlyHint": false,
-				"destructiveHint": false,
+				"destructiveHint": true,
 				"openWorldHint": false
 			}
 		},
@@ -781,7 +781,7 @@
 		{
 			"name": "score_leads",
 			"title": "Score candidates",
-			"description": "Score every candidate in an existing SourceGeek sheet against a job description or hiring criteria, writing a Score column (with reasoning) back to the sheet. Pass the sheet's artifactId and the requirements as text (fetch a job posting URL yourself first). Spends credits per scored row. Scoring runs in the background: if it has not finished within a minute the result says status 'running' — read the sheet again later to see the scores.",
+			"description": "Score every candidate in an existing SourceGeek sheet against a job description or hiring criteria, writing a Score column (with reasoning) back to the sheet; scoring a sheet again replaces its earlier scores. Rows without full profile data are first enriched from public profiles, billed per profile. Pass the sheet's artifactId and the requirements as text (fetch a job posting URL yourself first). Spends credits per scored row. Scoring runs in the background: if it has not finished within a minute the result says status 'running' — read the sheet again later to see the scores.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
@@ -800,14 +800,14 @@
 			"annotations": {
 				"title": "Score candidates",
 				"readOnlyHint": false,
-				"destructiveHint": false,
+				"destructiveHint": true,
 				"openWorldHint": true
 			}
 		},
 		{
 			"name": "search_rediscovered_talent",
 			"title": "Search previously known candidates",
-			"description": "Search previously known candidates from SourceGeek workspace sheets and merge connector-sourced candidates before external sourcing. Returns the matched candidates as CSV with source, prior status, last contact, match confidence, contact risk, and recommended re-engagement actions as columns. It does not create a sheet.",
+			"description": "Search previously known candidates from SourceGeek workspace sheets and merge connector-sourced candidates before external sourcing. Returns the matched candidates as CSV with source, prior status, last contact, match confidence, contact risk, and recommended re-engagement actions as columns. It does not create a sheet. Stores embeddings of the workspace's sheet rows in SourceGeek to reuse in later searches.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
@@ -845,7 +845,7 @@
 								"lastContactDate": {
 									"type": "string"
 								},
-								"linkedinUrl": {
+								"profileUrl": {
 									"type": "string"
 								},
 								"location": {
@@ -928,7 +928,7 @@
 		{
 			"name": "fast_search_leads",
 			"title": "Search candidates",
-			"description": "Search CoreSignal for professionals using a natural language query. Use this for finding recruiting candidates or contacts by title, company, location, seniority, industry, skills, or other professional criteria. Returns the matched candidates as CSV (Name, Title, Company, Location, LinkedIn) plus a searchId and a suggested title — it does not create a sheet. totalMatches is how many profiles the interpreted query matched before paging: 0 means the criteria as phrased matched nobody, so rephrase (fewer exclusions, broader titles or locations) rather than repeat the same query.",
+			"description": "Search CoreSignal for professionals using a natural language query. Use this for finding recruiting candidates or contacts by title, company, location, seniority, industry, skills, or other professional criteria. Returns the matched candidates as CSV (Name, Title, Company, Location and profile URL) plus a searchId and a suggested title — it does not create a sheet. totalMatches is how many profiles the interpreted query matched before paging: 0 means the criteria as phrased matched nobody, so rephrase (fewer exclusions, broader titles or locations) rather than repeat the same query. Spends the workspace's credits and stores the results in SourceGeek so a sheet saved later can carry the full candidate details.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
@@ -958,7 +958,7 @@
 		{
 			"name": "fast_search_companies",
 			"title": "Search companies",
-			"description": "Search CoreSignal for companies using a natural language query. Use this for finding companies by industry, headcount, location, funding, growth signals, or keywords. Sorting can be requested inside the query (supported fields: employees_count, last_funding_amount, followers_count, active_job_postings_count, num_news_articles, last_updated). Returns the matched companies as CSV (Name, Industry, Size, Employees, HQ Country, Website, LinkedIn) plus a suggested title — it does not create a sheet.",
+			"description": "Search CoreSignal for companies using a natural language query. Use this for finding companies by industry, headcount, location, funding, growth signals, or keywords. Sorting can be requested inside the query (supported fields: employees_count, last_funding_amount, followers_count, active_job_postings_count, num_news_articles, last_updated). Returns the matched companies as CSV (Name, Industry, Size, Employees, HQ Country, Website and company page URL) plus a suggested title — it does not create a sheet. Spends the workspace's credits.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
@@ -988,7 +988,7 @@
 		{
 			"name": "fast_search_jobs",
 			"title": "Search job postings",
-			"description": "Search CoreSignal for job postings using a natural language query. Use this for finding open roles by title, company, location, or hiring signals (e.g. which companies are hiring for a role). Sorting can be requested inside the query (supported fields: last_updated, company_employees_count). Returns the matched postings as CSV (Title, Company, Location, Posted) plus a suggested title — it does not create a sheet.",
+			"description": "Search CoreSignal for job postings using a natural language query. Use this for finding open roles by title, company, location, or hiring signals (e.g. which companies are hiring for a role). Sorting can be requested inside the query (supported fields: last_updated, company_employees_count). Returns the matched postings as CSV (Title, Company, Location, Posted) plus a suggested title — it does not create a sheet. Spends the workspace's credits.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
@@ -1044,7 +1044,7 @@
 		{
 			"name": "precision_search_leads",
 			"title": "Search candidates (precision)",
-			"description": "Higher-precision CoreSignal candidate search using the reasoning endpoint. Interprets the natural language query more carefully than the fast search and returns better-matched candidates plus an explanation of how it interpreted the query. More expensive and rate-limited (~10/hour) — use when match quality matters. Returns the matched candidates as CSV (Name, Title, Company, Location, LinkedIn) plus a searchId; it does not create a sheet. totalMatches is how many profiles the interpreted query matched before paging: 0 means the criteria as phrased matched nobody, so relax the query rather than repeat it.",
+			"description": "Higher-precision CoreSignal candidate search using the reasoning endpoint. Interprets the natural language query more carefully than the fast search and returns better-matched candidates plus an explanation of how it interpreted the query. More expensive and rate-limited (~10/hour) — use when match quality matters. Returns the matched candidates as CSV (Name, Title, Company, Location and profile URL) plus a searchId; it does not create a sheet. totalMatches is how many profiles the interpreted query matched before paging: 0 means the criteria as phrased matched nobody, so relax the query rather than repeat it. Spends the workspace's credits and stores the results in SourceGeek so a sheet saved later can carry the full candidate details.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
@@ -1074,7 +1074,7 @@
 		{
 			"name": "precision_search_companies",
 			"title": "Search companies (precision)",
-			"description": "Higher-precision CoreSignal company search using the reasoning endpoint. Interprets the natural language query more carefully than the fast search and returns better-matched companies plus an explanation of how it interpreted the query. More expensive and rate-limited (~10/hour, shared with the other precision searches) — use when match quality matters. Returns the matched companies as CSV (Name, Industry, Size, Employees, HQ Country, Website, LinkedIn) plus a suggested title; it does not create a sheet.",
+			"description": "Higher-precision CoreSignal company search using the reasoning endpoint. Interprets the natural language query more carefully than the fast search and returns better-matched companies plus an explanation of how it interpreted the query. More expensive and rate-limited (~10/hour, shared with the other precision searches) — use when match quality matters. Returns the matched companies as CSV (Name, Industry, Size, Employees, HQ Country, Website and company page URL) plus a suggested title; it does not create a sheet. Spends the workspace's credits.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
@@ -1104,7 +1104,7 @@
 		{
 			"name": "precision_search_jobs",
 			"title": "Search job postings (precision)",
-			"description": "Higher-precision CoreSignal job-posting search using the reasoning endpoint. Interprets the natural language query more carefully than the fast search and returns better-matched postings plus an explanation of how it interpreted the query. More expensive and rate-limited (~10/hour, shared with the other precision searches) — use when match quality matters. Returns the matched postings as CSV (Title, Company, Location, Posted) plus a suggested title; it does not create a sheet.",
+			"description": "Higher-precision CoreSignal job-posting search using the reasoning endpoint. Interprets the natural language query more carefully than the fast search and returns better-matched postings plus an explanation of how it interpreted the query. More expensive and rate-limited (~10/hour, shared with the other precision searches) — use when match quality matters. Returns the matched postings as CSV (Title, Company, Location, Posted) plus a suggested title; it does not create a sheet. Spends the workspace's credits.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
@@ -1134,14 +1134,14 @@
 		{
 			"name": "employee_company_details",
 			"title": "Get company profile",
-			"description": "Fetch a LinkedIn company page by vanity name or URL: name, tagline, description, industries, specialities, staff count and range, follower count, headquarters, locations, website, founded year and the numeric companyId.",
+			"description": "Fetch company data by vanity name or company page URL: name, tagline, description, industries, specialities, staff count and range, follower count, headquarters, locations, website, founded year and the numeric companyId.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
 					"companyUsernameOrUrl": {
 						"type": "string",
 						"minLength": 1,
-						"description": "A LinkedIn company vanity name such as 'google' or a company URL such as 'https://www.linkedin.com/company/google'."
+						"description": "A company vanity name such as 'google' or a company page URL ending in /company/google."
 					}
 				},
 				"required": ["companyUsernameOrUrl"]
@@ -1156,14 +1156,14 @@
 		{
 			"name": "employee_company_details_by_id",
 			"title": "Get company profile by id",
-			"description": "Fetch a LinkedIn company page by its numeric company id. Returns the company page: description, industries, headcount, HQ, website, vanity username.",
+			"description": "Fetch company data by numeric company id: description, industries, headcount, HQ, website and vanity name.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
 					"companyId": {
 						"type": "string",
 						"pattern": "^\\d+$",
-						"description": "Numeric LinkedIn company id (e.g. '1441'). The company page lookup by vanity name or URL returns it as companyId."
+						"description": "Numeric company id (e.g. '1441'). The company page lookup by vanity name or URL returns it as companyId."
 					}
 				},
 				"required": ["companyId"]
@@ -1178,7 +1178,7 @@
 		{
 			"name": "employee_search_companies",
 			"title": "Search company profiles",
-			"description": "Search LinkedIn company pages by keyword with optional filters: LinkedIn location ids, industry ids, company-size codes (A=1-10 … H=10,001+ employees) and hasJobs. Returns companies (name, username, companyId, tagline, industries, staff range) plus total and paging.",
+			"description": "Search company data by keyword with optional filters: location ids, industry ids, company-size codes (A=1-10 … H=10,001+ employees) and hasJobs. Returns companies (name, username, companyId, tagline, industries, staff range) plus total and paging.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
@@ -1192,14 +1192,14 @@
 						"items": {
 							"type": "integer"
 						},
-						"description": "LinkedIn geo ids (numeric part only)."
+						"description": "Geo ids (numeric part only)."
 					},
 					"industryIds": {
 						"type": "array",
 						"items": {
 							"type": "integer"
 						},
-						"description": "LinkedIn industry ids."
+						"description": "Industry ids."
 					},
 					"companySizes": {
 						"type": "array",
@@ -1211,7 +1211,7 @@
 					},
 					"hasJobs": {
 						"type": "boolean",
-						"description": "Only companies with open LinkedIn jobs."
+						"description": "Only companies with open job postings."
 					},
 					"page": {
 						"type": "integer",
@@ -1239,14 +1239,14 @@
 		{
 			"name": "employee_company_jobs",
 			"title": "Get a company's open jobs",
-			"description": "List a company's current LinkedIn job postings (title, url, location, posted date, job id) by company vanity name, URL or numeric id, newest first by default. Paged; returns paging info.",
+			"description": "List a company's current job postings (title, url, location, posted date, job id) by company vanity name, URL or numeric id, newest first by default. Paged; returns paging info.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
 					"companyUsernameOrUrl": {
 						"type": "string",
 						"minLength": 1,
-						"description": "A LinkedIn company vanity name such as 'google' or a company URL such as 'https://www.linkedin.com/company/google'."
+						"description": "A company vanity name such as 'google' or a company page URL ending in /company/google."
 					},
 					"page": {
 						"type": "integer",
@@ -1279,7 +1279,7 @@
 		{
 			"name": "employee_company_by_domain",
 			"title": "Find company profile by domain",
-			"description": "Look up a LinkedIn company page by website domain. Returns the company page (name, description, industries, headcount, headquarters, website and companyId), or an error when LinkedIn has no page mapped to the domain.",
+			"description": "Look up company data by website domain. Returns the company page (name, description, industries, headcount, headquarters, website and companyId), or an error when no company page is mapped to the domain.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
@@ -1301,14 +1301,14 @@
 		{
 			"name": "employee_company_insights",
 			"title": "Get company employee insights",
-			"description": "Premium LinkedIn company insights (5 credits): total headcount with 6m/1y growth and monthly history, headcount and growth by function, monthly hires, job openings by function, median employee tenure and notable recent alumni. Company vanity name or URL required.",
+			"description": "Premium company data (5 credits): total headcount with 6m/1y growth and monthly history, headcount and growth by function, monthly hires, job openings by function, median employee tenure and notable recent alumni. Company vanity name or URL required.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
 					"companyUsernameOrUrl": {
 						"type": "string",
 						"minLength": 1,
-						"description": "A LinkedIn company vanity name such as 'google' or a company URL such as 'https://www.linkedin.com/company/google'."
+						"description": "A company vanity name such as 'google' or a company page URL ending in /company/google."
 					}
 				},
 				"required": ["companyUsernameOrUrl"]
@@ -1323,14 +1323,14 @@
 		{
 			"name": "employee_company_jobs_count",
 			"title": "Count a company's open jobs",
-			"description": "Return the total number of open LinkedIn job postings for a company by numeric company id.",
+			"description": "Return the total number of open job postings for a company by numeric company id.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
 					"companyId": {
 						"type": "string",
 						"pattern": "^\\d+$",
-						"description": "Numeric LinkedIn company id (e.g. '1441'). The company page lookup by vanity name or URL returns it as companyId."
+						"description": "Numeric company id (e.g. '1441'). The company page lookup by vanity name or URL returns it as companyId."
 					}
 				},
 				"required": ["companyId"]
@@ -1345,14 +1345,14 @@
 		{
 			"name": "employee_company_similar_pages",
 			"title": "Find similar company profiles",
-			"description": "List the company pages LinkedIn surfaces as 'people also viewed' for a company (name, username, companyId, industries, staff count) — peers and competitors.",
+			"description": "List the companies shown as 'people also viewed' next to a company's page (name, username, companyId, industries, staff count) — peers and competitors.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
 					"companyUsernameOrUrl": {
 						"type": "string",
 						"minLength": 1,
-						"description": "A LinkedIn company vanity name such as 'google' or a company URL such as 'https://www.linkedin.com/company/google'."
+						"description": "A company vanity name such as 'google' or a company page URL ending in /company/google."
 					},
 					"limit": {
 						"type": "integer",
@@ -1374,7 +1374,7 @@
 		{
 			"name": "employee_search_people",
 			"title": "Search employees",
-			"description": "Search LinkedIn members by keywords, title keyword, first/last name, current company, school and geo id. Returns fullName, headline, location, username and profile URL per hit plus the total; pages of 10 via start (0, 10, 20…). Non-public profiles are filtered out, so pages can be short.",
+			"description": "Search employee data by keywords, title keyword, first/last name, current company, school and geo id. Returns fullName, headline, location, username and profile URL per hit plus the total; pages of 10 via start (0, 10, 20…). Non-public profiles are filtered out, so pages can be short.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
@@ -1401,18 +1401,18 @@
 						"items": {
 							"type": "string"
 						},
-						"description": "Numeric LinkedIn company ids to restrict current employer."
+						"description": "Numeric company ids to restrict current employer."
 					},
 					"keywordSchool": {
 						"type": "string"
 					},
 					"schoolId": {
 						"type": "string",
-						"description": "Numeric LinkedIn school id."
+						"description": "Numeric school id."
 					},
 					"geoId": {
 						"type": "string",
-						"description": "LinkedIn geo id (numeric part, e.g. '102011674')."
+						"description": "Geo id (numeric part, e.g. '102011674')."
 					},
 					"start": {
 						"type": "string",
@@ -1438,7 +1438,7 @@
 		{
 			"name": "employee_search_locations",
 			"title": "Look up locations",
-			"description": "Resolve a city, region or country name to LinkedIn geo ids (geoId + canonical name), e.g. 'Amsterdam' → 102011674 'Amsterdam, North Holland, Netherlands'.",
+			"description": "Resolve a city, region or country name to geo ids (geoId + canonical name) for the employee and company data searches, e.g. 'Amsterdam' → 102011674 'Amsterdam, North Holland, Netherlands'.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
@@ -1467,14 +1467,14 @@
 		{
 			"name": "employee_profile_by_url",
 			"title": "Get employee profile by URL",
-			"description": "Fetch a full LinkedIn profile (headline, summary, positions, education, skills, location) from any profile URL, including hashed /in/ACoAA… URLs.",
+			"description": "Fetch a person's full public profile (headline, summary, positions, education, skills, location) from any profile URL, including hashed /in/ACoAA… URLs.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
 					"profileUrl": {
 						"type": "string",
 						"format": "uri",
-						"description": "Full LinkedIn profile URL."
+						"description": "Full public profile URL."
 					}
 				},
 				"required": ["profileUrl"]
@@ -1489,14 +1489,14 @@
 		{
 			"name": "employee_profile_posts",
 			"title": "Get a person's posts",
-			"description": "Fetch a member's LinkedIn posts (text, posted date, reaction/comment/repost counts, urn, shareUrn, url, attached job or article), newest first. Optional postedAfter date filter; paged via start (0, 50, 100…) and paginationToken.",
+			"description": "Fetch a person's public posts (text, posted date, reaction/comment/repost counts, urn, shareUrn, url, attached job or article), newest first. Optional postedAfter date filter; paged via start (0, 50, 100…) and paginationToken.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
 					"usernameOrUrl": {
 						"type": "string",
 						"minLength": 1,
-						"description": "A LinkedIn member username such as 'janedoe' or a profile URL such as 'https://www.linkedin.com/in/janedoe'."
+						"description": "A profile username such as 'janedoe' or a public profile URL ending in /in/janedoe."
 					},
 					"postedAfter": {
 						"type": "string",
@@ -1530,14 +1530,14 @@
 		{
 			"name": "employee_profile_recent_activity_time",
 			"title": "Get a person's last activity",
-			"description": "Return when a LinkedIn member was last active (timestamp, relative age such as '1d', and activity type).",
+			"description": "Return when a person was last active (timestamp, relative age such as '1d', and activity type).",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
 					"usernameOrUrl": {
 						"type": "string",
 						"minLength": 1,
-						"description": "A LinkedIn member username such as 'janedoe' or a profile URL such as 'https://www.linkedin.com/in/janedoe'."
+						"description": "A profile username such as 'janedoe' or a public profile URL ending in /in/janedoe."
 					}
 				},
 				"required": ["usernameOrUrl"]
@@ -1552,14 +1552,14 @@
 		{
 			"name": "employee_similar_profiles",
 			"title": "Find similar employee profiles",
-			"description": "Find LinkedIn profiles similar to a given member (LinkedIn's own 'similar profiles'): fullName, headline, location, username, profile URL.",
+			"description": "Find public profiles similar to a given person: fullName, headline, location, username, profile URL.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
 					"usernameOrUrl": {
 						"type": "string",
 						"minLength": 1,
-						"description": "A LinkedIn member username such as 'janedoe' or a profile URL such as 'https://www.linkedin.com/in/janedoe'."
+						"description": "A profile username such as 'janedoe' or a public profile URL ending in /in/janedoe."
 					},
 					"limit": {
 						"type": "integer",
@@ -1581,14 +1581,14 @@
 		{
 			"name": "employee_profile_about",
 			"title": "Get a person's About section",
-			"description": "Return a LinkedIn member's 'About this profile' facts: joined date, verification status and details, last contact-info and photo updates.",
+			"description": "Return a public profile's 'About this profile' facts: joined date, verification status and details, last contact-info and photo updates.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
 					"usernameOrUrl": {
 						"type": "string",
 						"minLength": 1,
-						"description": "A LinkedIn member username such as 'janedoe' or a profile URL such as 'https://www.linkedin.com/in/janedoe'."
+						"description": "A profile username such as 'janedoe' or a public profile URL ending in /in/janedoe."
 					}
 				},
 				"required": ["usernameOrUrl"]
@@ -1603,7 +1603,7 @@
 		{
 			"name": "employee_search_jobs",
 			"title": "Search jobs (filters)",
-			"description": "Search live LinkedIn job postings by keywords with optional geo id, company ids, date-posted, job type, experience level, onsite/remote, salary and sort filters. Returns job id, title, url, company, location, posted date; pages of 25 via start.",
+			"description": "Search live job postings by keywords with optional geo id, company ids, date-posted, job type, experience level, onsite/remote, salary and sort filters. Returns job id, title, url, company, location, posted date; pages of 25 via start.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
@@ -1614,35 +1614,35 @@
 					},
 					"locationId": {
 						"type": "string",
-						"description": "LinkedIn geo id."
+						"description": "Geo id."
 					},
 					"companyIds": {
 						"type": "array",
 						"items": {
 							"type": "string"
 						},
-						"description": "Numeric LinkedIn company ids."
+						"description": "Numeric company ids."
 					},
 					"titleIds": {
 						"type": "array",
 						"items": {
 							"type": "string"
 						},
-						"description": "LinkedIn title ids (only if known)."
+						"description": "Title ids (only if known)."
 					},
 					"functionIds": {
 						"type": "array",
 						"items": {
 							"type": "string"
 						},
-						"description": "LinkedIn job-function ids (only if known)."
+						"description": "Job-function ids (only if known)."
 					},
 					"industryIds": {
 						"type": "array",
 						"items": {
 							"type": "string"
 						},
-						"description": "LinkedIn industry ids (only if known)."
+						"description": "Industry ids (only if known)."
 					},
 					"datePosted": {
 						"enum": ["anyTime", "pastMonth", "pastWeek", "past24Hours"],
@@ -1700,7 +1700,7 @@
 		{
 			"name": "employee_search_jobs_v2",
 			"title": "Search jobs",
-			"description": "Search live LinkedIn job postings by keywords with an optional geo id, a distance radius (0, 5, 10, 25, 50 or 100 miles), company ids, date-posted, job type, experience level, onsite/remote, salary and sort filters. Returns job id, title, url, company, location, posted date and benefits when listed.",
+			"description": "Search live job postings by keywords with an optional geo id, a distance radius (0, 5, 10, 25, 50 or 100 miles), company ids, date-posted, job type, experience level, onsite/remote, salary and sort filters. Returns job id, title, url, company, location, posted date and benefits when listed.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
@@ -1711,35 +1711,35 @@
 					},
 					"locationId": {
 						"type": "string",
-						"description": "LinkedIn geo id."
+						"description": "Geo id."
 					},
 					"companyIds": {
 						"type": "array",
 						"items": {
 							"type": "string"
 						},
-						"description": "Numeric LinkedIn company ids."
+						"description": "Numeric company ids."
 					},
 					"titleIds": {
 						"type": "array",
 						"items": {
 							"type": "string"
 						},
-						"description": "LinkedIn title ids (only if known)."
+						"description": "Title ids (only if known)."
 					},
 					"functionIds": {
 						"type": "array",
 						"items": {
 							"type": "string"
 						},
-						"description": "LinkedIn job-function ids (only if known)."
+						"description": "Job-function ids (only if known)."
 					},
 					"industryIds": {
 						"type": "array",
 						"items": {
 							"type": "string"
 						},
-						"description": "LinkedIn industry ids (only if known)."
+						"description": "Industry ids (only if known)."
 					},
 					"datePosted": {
 						"enum": ["anyTime", "pastMonth", "pastWeek", "past24Hours"],
@@ -1802,14 +1802,14 @@
 		{
 			"name": "employee_job_details",
 			"title": "Get job posting",
-			"description": "Fetch a LinkedIn job posting by id or jobs/view URL: title, state, description, location, employment type, job functions, industries, language, listed/expiry dates, apply URLs and the hiring company's summary.",
+			"description": "Fetch a job posting by id or jobs/view URL: title, state, description, location, employment type, job functions, industries, language, listed/expiry dates, apply URLs and the hiring company's summary.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
 					"jobId": {
 						"type": "string",
 						"minLength": 1,
-						"description": "LinkedIn job id (e.g. '4423135589') or a linkedin.com/jobs/view/<id> URL."
+						"description": "Job id (e.g. '4423135589') or a /jobs/view/<id> URL."
 					}
 				},
 				"required": ["jobId"]
@@ -1824,17 +1824,17 @@
 		{
 			"name": "employee_job_hiring_team",
 			"title": "Get a job's hiring team",
-			"description": "List the hiring-team members LinkedIn shows on a job posting (fullName, headline, username, profile URL) by job id or job URL.",
+			"description": "List the hiring-team members shown on a job posting (fullName, headline, username, profile URL) by job id or job URL.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
 					"jobId": {
 						"type": "string",
-						"description": "LinkedIn job id."
+						"description": "Job id."
 					},
 					"jobUrl": {
 						"type": "string",
-						"description": "linkedin.com/jobs/view/<id> URL."
+						"description": "A /jobs/view/<id> URL."
 					},
 					"limit": {
 						"type": "integer",
@@ -1856,7 +1856,7 @@
 		{
 			"name": "employee_search_posts",
 			"title": "Search posts",
-			"description": "Search LinkedIn posts by keyword with optional filters: sort (relevance or date_posted), date window (e.g. 'past-24h', 'past-week', 'past-month'), author title, author company ids, author industry ids, from-member usernames, from-company ids, mentions. Returns post text, author, engagement counts, urn/url; paged.",
+			"description": "Search public posts by keyword with optional filters: sort (relevance or date_posted), date window (e.g. 'past-24h', 'past-week', 'past-month'), author title, author company ids, author industry ids, from-member usernames, from-company ids, mentions. Returns post text, author, engagement counts, urn/url; paged.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
@@ -1947,7 +1947,7 @@
 		{
 			"name": "employee_search_posts_by_hashtag",
 			"title": "Search posts by hashtag (basic)",
-			"description": "Search LinkedIn posts by hashtag (legacy v1): post text, author, engagement counts, urn/url. Sort RELEVANT, REV_CHRON or CHRON; paged via start and paginationToken.",
+			"description": "Search public posts by hashtag (legacy v1): post text, author, engagement counts, urn/url. Sort RELEVANT, REV_CHRON or CHRON; paged via start and paginationToken.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
@@ -1988,7 +1988,7 @@
 		{
 			"name": "employee_search_posts_by_hashtag_v2",
 			"title": "Search posts by hashtag",
-			"description": "Search LinkedIn posts by hashtag (v2, preferred): post text, author, engagement counts, urn/url. Sort RELEVANCE or DATE_POSTED; paged via start and paginationToken.",
+			"description": "Search public posts by hashtag (v2, preferred): post text, author, engagement counts, urn/url. Sort RELEVANCE or DATE_POSTED; paged via start and paginationToken.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
@@ -2029,14 +2029,14 @@
 		{
 			"name": "employee_get_post",
 			"title": "Get post",
-			"description": "Fetch a single LinkedIn post by URL: text, author, posted date, reaction/comment/repost counts, urn, shareUrn, attached job or article, mentioned members and companies.",
+			"description": "Fetch a single public post by URL: text, author, posted date, reaction/comment/repost counts, urn, shareUrn, attached job or article, mentioned people and companies.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
 					"postUrl": {
 						"type": "string",
 						"format": "uri",
-						"description": "Post URL (linkedin.com/posts/… or linkedin.com/feed/update/urn:li:activity:…)."
+						"description": "Post URL (a /posts/… or /feed/update/urn:li:activity:… URL)."
 					}
 				},
 				"required": ["postUrl"]
@@ -2051,7 +2051,7 @@
 		{
 			"name": "employee_get_social_post",
 			"title": "Get post by URL",
-			"description": "Fetch a single LinkedIn post by URL via the provider's alternate 'social post' route: text, author, posted date, engagement counts and urn. Use it when the standard post lookup fails.",
+			"description": "Fetch a single public post by URL via the provider's alternate 'social post' route: text, author, posted date, engagement counts and urn. Use it when the standard post lookup fails.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
@@ -2073,7 +2073,7 @@
 		{
 			"name": "employee_post_comments",
 			"title": "Get post comments",
-			"description": "List comments on a LinkedIn post by post urn: text, author (fullName, headline, username, url), created date, reaction and reply counts. Sort mostRelevant or mostRecent; paged via page and paginationToken.",
+			"description": "List comments on a public post by post urn: text, author (fullName, headline, username, url), created date, reaction and reply counts. Sort mostRelevant or mostRecent; paged via page and paginationToken.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
@@ -2117,14 +2117,14 @@
 		{
 			"name": "employee_post_comments_by_share_url",
 			"title": "Get post comments by URL",
-			"description": "List comments on a LinkedIn post identified by its share URL: text, author, created date, reaction counts. Sort mostRelevant or mostRecent; paged.",
+			"description": "List comments on a public post identified by its share URL: text, author, created date, reaction counts. Sort mostRelevant or mostRecent; paged.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
 					"shareUrl": {
 						"type": "string",
 						"format": "uri",
-						"description": "The post's share URL (linkedin.com/posts/…)."
+						"description": "The post's share URL (a /posts/… URL)."
 					},
 					"sort": {
 						"enum": ["mostRelevant", "mostRecent"],
@@ -2161,7 +2161,7 @@
 		{
 			"name": "employee_post_reactions",
 			"title": "Get post reactions",
-			"description": "List the members who reacted to a LinkedIn post by URL: fullName, headline, profile URL, reaction type. Optional reactionType filter; paged via page with total/totalPages.",
+			"description": "List the people who reacted to a public post by URL: fullName, headline, profile URL, reaction type. Optional reactionType filter; paged via page with total/totalPages.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
@@ -2200,7 +2200,7 @@
 		{
 			"name": "employee_post_reposts",
 			"title": "Get post reposts",
-			"description": "List the members who reposted a LinkedIn post by post urn (activity id, urn:li:activity:… or post URL): person summary and repost date; paged via page and paginationToken.",
+			"description": "List the people who reposted a public post by post urn (activity id, urn:li:activity:… or post URL): person summary and repost date; paged via page and paginationToken.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
@@ -2239,14 +2239,14 @@
 		{
 			"name": "employee_profile_comments",
 			"title": "Get a person's comments",
-			"description": "List a LinkedIn member's recent comment activity: their comment text, when they commented, and the post it was on (text, url, author, engagement).",
+			"description": "List a person's recent public comment activity: their comment text, when they commented, and the post it was on (text, url, author, engagement).",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
 					"usernameOrUrl": {
 						"type": "string",
 						"minLength": 1,
-						"description": "A LinkedIn member username such as 'janedoe' or a profile URL such as 'https://www.linkedin.com/in/janedoe'."
+						"description": "A profile username such as 'janedoe' or a public profile URL ending in /in/janedoe."
 					},
 					"limit": {
 						"type": "integer",
@@ -2268,14 +2268,14 @@
 		{
 			"name": "employee_profile_reactions",
 			"title": "Get a person's reactions",
-			"description": "List the LinkedIn posts a member reacted to: reaction action, entity type and the post (text, url, author, engagement). Paged via start (0, 100, 200…) and paginationToken.",
+			"description": "List the public posts a person reacted to: reaction action, entity type and the post (text, url, author, engagement). Paged via start (0, 100, 200…) and paginationToken.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
 					"usernameOrUrl": {
 						"type": "string",
 						"minLength": 1,
-						"description": "A LinkedIn member username such as 'janedoe' or a profile URL such as 'https://www.linkedin.com/in/janedoe'."
+						"description": "A profile username such as 'janedoe' or a public profile URL ending in /in/janedoe."
 					},
 					"start": {
 						"type": "string",
@@ -2305,14 +2305,14 @@
 		{
 			"name": "employee_group_posts",
 			"title": "Get group posts",
-			"description": "List posts in a LinkedIn group by numeric group id: text, author (fullName, headline, username), posted date, engagement counts, url. Paged via page.",
+			"description": "List posts in a professional group by numeric group id: text, author (fullName, headline, username), posted date, engagement counts, url. Paged via page.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
 					"groupId": {
 						"type": "integer",
 						"exclusiveMinimum": 0,
-						"description": "Numeric group id from linkedin.com/groups/<id>."
+						"description": "Numeric group id, as in a /groups/<id> URL."
 					},
 					"page": {
 						"type": "integer",
@@ -2347,7 +2347,7 @@
 					"usernameOrUrl": {
 						"type": "string",
 						"minLength": 1,
-						"description": "A LinkedIn member username such as 'janedoe' or a profile URL such as 'https://www.linkedin.com/in/janedoe'."
+						"description": "A profile username such as 'janedoe' or a public profile URL ending in /in/janedoe."
 					},
 					"page": {
 						"type": "integer",
@@ -2375,14 +2375,14 @@
 		{
 			"name": "employee_profile_group_interests",
 			"title": "Get groups a person follows",
-			"description": "List the LinkedIn groups a member belongs to (id, name, url, follower count). Paged via page (50 per page).",
+			"description": "List the professional groups a person belongs to (id, name, url, follower count). Paged via page (50 per page).",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
 					"usernameOrUrl": {
 						"type": "string",
 						"minLength": 1,
-						"description": "A LinkedIn member username such as 'janedoe' or a profile URL such as 'https://www.linkedin.com/in/janedoe'."
+						"description": "A profile username such as 'janedoe' or a public profile URL ending in /in/janedoe."
 					},
 					"page": {
 						"type": "integer",
@@ -2417,7 +2417,7 @@
 					"usernameOrUrl": {
 						"type": "string",
 						"minLength": 1,
-						"description": "A LinkedIn member username such as 'janedoe' or a profile URL such as 'https://www.linkedin.com/in/janedoe'."
+						"description": "A profile username such as 'janedoe' or a public profile URL ending in /in/janedoe."
 					},
 					"page": {
 						"type": "integer",
@@ -2445,14 +2445,14 @@
 		{
 			"name": "employee_profile_newsletter_interests",
 			"title": "Get newsletters a person follows",
-			"description": "List the LinkedIn newsletters a member subscribes to (id, name, url, description, frequency, publisher). Paged via page (50 per page).",
+			"description": "List the newsletters a person subscribes to (id, name, url, description, frequency, publisher). Paged via page (50 per page).",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
 					"usernameOrUrl": {
 						"type": "string",
 						"minLength": 1,
-						"description": "A LinkedIn member username such as 'janedoe' or a profile URL such as 'https://www.linkedin.com/in/janedoe'."
+						"description": "A profile username such as 'janedoe' or a public profile URL ending in /in/janedoe."
 					},
 					"page": {
 						"type": "integer",
@@ -2480,14 +2480,14 @@
 		{
 			"name": "employee_profile_top_voice_interests",
 			"title": "Get Top Voices a person follows",
-			"description": "List the LinkedIn Top Voices a member follows: fullName, headline, username, profile URL.",
+			"description": "List the Top Voices a person follows: fullName, headline, username, profile URL.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
 					"usernameOrUrl": {
 						"type": "string",
 						"minLength": 1,
-						"description": "A LinkedIn member username such as 'janedoe' or a profile URL such as 'https://www.linkedin.com/in/janedoe'."
+						"description": "A profile username such as 'janedoe' or a public profile URL ending in /in/janedoe."
 					},
 					"limit": {
 						"type": "integer",
@@ -2509,14 +2509,14 @@
 		{
 			"name": "employee_profile_full_with_posts",
 			"title": "Get employee profile with posts",
-			"description": "Fetch a full LinkedIn profile, connection/follower counts and the member's recent posts in one call (2 credits).",
+			"description": "Fetch a person's full public profile, connection/follower counts and recent posts in one call (2 credits).",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
 					"usernameOrUrl": {
 						"type": "string",
 						"minLength": 1,
-						"description": "A LinkedIn member username such as 'janedoe' or a profile URL such as 'https://www.linkedin.com/in/janedoe'."
+						"description": "A profile username such as 'janedoe' or a public profile URL ending in /in/janedoe."
 					},
 					"limit": {
 						"type": "integer",
@@ -2538,14 +2538,14 @@
 		{
 			"name": "employee_profile_with_recommendations",
 			"title": "Get employee profile with recommendations",
-			"description": "Fetch a full LinkedIn profile together with received and given recommendations in one call (2 credits).",
+			"description": "Fetch a person's full public profile together with received and given recommendations in one call (2 credits).",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
 					"usernameOrUrl": {
 						"type": "string",
 						"minLength": 1,
-						"description": "A LinkedIn member username such as 'janedoe' or a profile URL such as 'https://www.linkedin.com/in/janedoe'."
+						"description": "A profile username such as 'janedoe' or a public profile URL ending in /in/janedoe."
 					},
 					"limit": {
 						"type": "integer",
@@ -2612,7 +2612,7 @@
 		{
 			"name": "list_tasks",
 			"title": "List a project's tasks",
-			"description": "List one SourceGeek project's tasks (removed ones left out), in board order, with the project's brief. Each task has its key (e.g. SBE-12), title, status (To do, Waiting, In progress, Working, Needs input, Needs approval, Ready for review, Failed or Done), priority, assignee, progress through its steps while it runs, the tasks it waits on, its repeat schedule if it recurs, and its URL.",
+			"description": "List one SourceGeek project's tasks (removed ones left out), in board order, with the project's brief. Each task has its key (e.g. SBE-12), title, status (To do, Waiting, In progress, Working, Needs input, Needs approval, Ready for review, Failed or Done), assignee, progress through its steps while it runs, the tasks it waits on, its repeat schedule if it recurs, and its URL.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
@@ -2758,7 +2758,7 @@
 		{
 			"name": "start_tasks",
 			"title": "Start SourceGeek on tasks",
-			"description": "Start SourceGeek on tasks of one project: each runs in a SourceGeek chat of its own, as the user, and costs one chat run of the workspace's credits. A task that waits on others not yet ready for review is queued instead and starts by itself, with their results, once they are; on a task that already ran, the instruction goes to its chat as a follow-up. Tasks report back in SourceGeek (the project's chat, the inbox and email) when they are ready for review or fail. Returns what started, what waits and what couldn't start.",
+			"description": "Start SourceGeek on tasks of one project: each runs in a SourceGeek chat of its own, as the user, and costs one chat run of the workspace's credits. A running task can search the web and third-party data sources and use the user's connected apps. A task that waits on others not yet ready for review is queued instead and starts by itself, with their results, once they are; on a task that already ran, the instruction goes to its chat as a follow-up. Tasks report back in SourceGeek (the project's chat, the inbox and email) when they are ready for review or fail. Returns what started, what waits and what couldn't start.",
 			"inputSchema": {
 				"type": "object",
 				"properties": {
@@ -2792,7 +2792,7 @@
 				"title": "Start SourceGeek on tasks",
 				"readOnlyHint": false,
 				"destructiveHint": true,
-				"openWorldHint": false
+				"openWorldHint": true
 			}
 		}
 	]

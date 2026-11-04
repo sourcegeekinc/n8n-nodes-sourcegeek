@@ -124,8 +124,6 @@ const ACRONYMS: Record<string, string> = {
 	cbs: 'CBS',
 	uri: 'URI',
 	uris: 'URIs',
-	// A field such as linkedinUsernameOrUrl reads as "Profile Username Or URL".
-	linkedin: 'Profile',
 };
 
 /** `searchId` → "Search ID", `company_url` → "Company URL". */
